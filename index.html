@@ -353,7 +353,7 @@
   .crypto-row:last-child { border-bottom:none; }
 
   .crypto-left  { display:flex; align-items:center; gap:6px; }
-  .crypto-icon  { font-size:13px; line-height:1; }
+  .crypto-icon  { width:18px; height:18px; border-radius:50%; flex-shrink:0; object-fit:cover; }
   .crypto-sym   {
     font-family:'Rajdhani',sans-serif; font-weight:700;
     font-size:11px; color:var(--white); letter-spacing:1px;
@@ -1352,15 +1352,7 @@ async function loadGantt() {
 /* ════════════════════════════
    CRYPTO PRICES (CoinGecko free)
 ════════════════════════════ */
-const COINS = [
-  { id:'bitcoin',      sym:'BTC',  icon:'₿',  name:'Bitcoin'      },
-  { id:'ethereum',     sym:'ETH',  icon:'Ξ',  name:'Ethereum'     },
-  { id:'solana',       sym:'SOL',  icon:'◎',  name:'Solana'       },
-  { id:'cosmos',       sym:'ATOM', icon:'⚛',  name:'Cosmos'       },
-  { id:'dydx',         sym:'DYDX', icon:'◈',  name:'dYdX'         },
-  { id:'babylon',      sym:'BABY', icon:'🏛',  name:'Babylon'      },
-  { id:'tether-gold',  sym:'XAUT', icon:'🥇',  name:'Tether Gold'  },
-];
+const COIN_IDS = 'bitcoin,ethereum,solana,cosmos,dydx,babylon,tether-gold';
 
 function fmtPrice(p, sym) {
   if (p == null) return '--';
@@ -1378,8 +1370,7 @@ function fmtChg(c) {
 }
 
 async function fetchCrypto() {
-  const ids = COINS.map(c => c.id).join(',');
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${COIN_IDS}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`;
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error(r.status);
@@ -1388,24 +1379,24 @@ async function fetchCrypto() {
     const list = document.getElementById('crypto-list');
     list.innerHTML = '';
 
-    COINS.forEach(coin => {
-      const d   = data[coin.id] || {};
-      const p   = d.usd;
-      const chg = d.usd_24h_change;
+    data.forEach(coin => {
+      const p   = coin.current_price;
+      const chg = coin.price_change_percentage_24h;
       const {txt, cls} = fmtChg(chg);
+      const sym = coin.symbol.toUpperCase();
 
       const row = document.createElement('div');
       row.className = 'crypto-row';
       row.innerHTML = `
         <div class="crypto-left">
-          <span class="crypto-icon">${coin.icon}</span>
+          <img class="crypto-icon" src="${coin.image}" alt="${sym}" loading="lazy">
           <div>
-            <div class="crypto-sym">${coin.sym}</div>
+            <div class="crypto-sym">${sym}</div>
             <div class="crypto-name">${coin.name}</div>
           </div>
         </div>
         <div class="crypto-right">
-          <div class="crypto-price">${fmtPrice(p, coin.sym)}</div>
+          <div class="crypto-price">${fmtPrice(p, sym)}</div>
           <div class="crypto-chg ${cls}">${txt}</div>
         </div>`;
       list.appendChild(row);
