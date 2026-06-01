@@ -212,9 +212,18 @@
   .dc {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     border-radius:2px; position:relative; min-height:0;
+    cursor:pointer;
   }
+  .dc:not(.empty):hover { filter:brightness(1.2); }
   .dc-num   { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; color:var(--mist); line-height:1.1; opacity:.58; }
   .dc-lunar { font-size:6px; color:var(--dim); opacity:.6; line-height:1; }
+
+  /* Indicators: task start/end + note — top-right corner */
+  .dc-marks { position:absolute; top:1px; right:1px; display:flex; gap:1px; }
+  .dcm { width:3px; height:3px; border-radius:50%; flex-shrink:0; }
+  .dcm-s { background:#64C8B4; box-shadow:0 0 3px #64C8B4; }  /* task start */
+  .dcm-e { background:#FF9050; box-shadow:0 0 3px #FF9050; }  /* task end   */
+  .dcm-n { background:#FFD700; box-shadow:0 0 3px #FFD700; }  /* note       */
 
   .dc.empty .dc-num, .dc.empty .dc-lunar { opacity:0; }
 
@@ -603,6 +612,77 @@
   .tt-row { display:flex; gap:6px; }
   .tt-key { color:var(--gantt-label); }
 
+  /* ── DAY POPUP ── */
+  .day-popup-backdrop {
+    position:fixed; inset:0; z-index:800;
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(2px);
+    display:none; align-items:center; justify-content:center;
+  }
+  .day-popup-backdrop.show { display:flex; }
+
+  .day-popup {
+    background: [data-theme="dark"] var(--tooltip-bg);
+    background:var(--tooltip-bg);
+    border:1px solid var(--tooltip-b);
+    border-radius:8px; padding:0;
+    min-width:280px; max-width:360px; width:90%;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    animation:fadeUp .15s ease;
+    overflow:hidden;
+  }
+  .dp-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px 8px;
+    border-bottom:1px solid var(--tooltip-b);
+  }
+  .dp-date {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:15px; color:var(--red); letter-spacing:1px;
+  }
+  .dp-lunar { font-size:9px; color:var(--gantt-label); margin-left:6px; }
+  .dp-close {
+    background:none; border:none; cursor:pointer;
+    font-size:16px; color:var(--mist); line-height:1; padding:0 2px;
+  }
+  .dp-close:hover { color:var(--red); }
+  .dp-body { padding:10px 14px 12px; display:flex; flex-direction:column; gap:10px; }
+
+  .dp-section-title {
+    font-size:7px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--mist); opacity:.45; margin-bottom:5px;
+  }
+  .dp-task-item {
+    display:flex; align-items:flex-start; gap:7px;
+    padding:5px 8px; border-radius:4px;
+    background:var(--gantt-bg); border:1px solid var(--gantt-line);
+    margin-bottom:4px;
+  }
+  .dp-task-item:last-child { margin-bottom:0; }
+  .dp-task-badge {
+    font-size:7px; font-weight:bold; padding:1px 5px; border-radius:2px;
+    flex-shrink:0; margin-top:1px;
+  }
+  .dp-badge-s { background:rgba(100,200,180,0.2); color:#64C8B4; border:1px solid rgba(100,200,180,0.4); }
+  .dp-badge-e { background:rgba(255,144,80,0.2);  color:#FF9050; border:1px solid rgba(255,144,80,0.4); }
+  .dp-task-info { flex:1; min-width:0; }
+  .dp-task-name { font-size:9px; color:var(--tooltip-c); font-weight:bold; margin-bottom:2px; }
+  .dp-task-sub  { font-size:8px; color:var(--gantt-label); }
+  .dp-prio { display:inline-block; font-size:7px; font-weight:bold; padding:0 4px; border-radius:2px; margin-right:4px; }
+  .dp-prio-A { background:rgba(200,16,46,0.2);  color:#FF8080; }
+  .dp-prio-B { background:rgba(212,168,67,0.2); color:var(--gold); }
+  .dp-prio-C { background:rgba(100,200,180,0.2);color:var(--pink); }
+
+  .dp-note-item {
+    display:flex; align-items:flex-start; gap:7px;
+    padding:5px 8px; border-radius:4px;
+    background:rgba(255,215,0,0.06); border:1px solid rgba(255,215,0,0.2);
+    margin-bottom:4px;
+  }
+  .dp-note-item:last-child { margin-bottom:0; }
+  .dp-note-icon { font-size:11px; flex-shrink:0; margin-top:0px; }
+  .dp-note-text { font-size:9px; color:var(--tooltip-c); line-height:1.5; flex:1; }
+  .dp-empty { font-size:8px; color:var(--gantt-label); opacity:.6; font-style:italic; }
+
   /* ── BOTTOM BAR ── */
   .bot {
     position:absolute; bottom:28px; left:0; right:0;
@@ -820,6 +900,29 @@
 <!-- Tooltip -->
 <div class="gantt-tooltip" id="gantt-tt"></div>
 
+<!-- Day popup -->
+<div class="day-popup-backdrop" id="day-backdrop">
+  <div class="day-popup">
+    <div class="dp-header">
+      <div>
+        <span class="dp-date" id="dp-date">--/--/----</span>
+        <span class="dp-lunar" id="dp-lunar"></span>
+      </div>
+      <button class="dp-close" id="dp-close">×</button>
+    </div>
+    <div class="dp-body">
+      <div id="dp-tasks-wrap">
+        <div class="dp-section-title">📋 Kế hoạch</div>
+        <div id="dp-tasks"></div>
+      </div>
+      <div id="dp-notes-wrap">
+        <div class="dp-section-title">📝 Ghi chú cá nhân</div>
+        <div id="dp-notes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════
    THEME TOGGLE
@@ -918,6 +1021,34 @@ function animLoop(){
   requestAnimationFrame(animLoop);
 }
 animLoop();
+
+/* ════════════════════════════
+   GLOBAL CALENDAR DATA
+════════════════════════════ */
+let PLAN_TASKS  = [];  // from actionplan.json
+let CAL_NOTES   = [];  // from calendar_notes.json
+
+// Build maps: "YYYY-MM-DD" → [{task, role:'start'|'end'}]
+function buildTaskDateMap() {
+  const m = {};
+  PLAN_TASKS.forEach(t => {
+    [t.start, t.end].forEach((d, i) => {
+      if (!d) return;
+      if (!m[d]) m[d] = [];
+      m[d].push({task: t, role: i === 0 ? 'start' : 'end'});
+    });
+  });
+  return m;
+}
+
+function buildNoteMap() {
+  const m = {};
+  CAL_NOTES.forEach(n => {
+    if (!m[n.date]) m[n.date] = [];
+    m[n.date].push(n);
+  });
+  return m;
+}
 
 /* ════════════════════════════
    HELPERS
@@ -1061,6 +1192,9 @@ function renderGrid(gridId, year, month, todayDate){
   const grid=document.getElementById(gridId);
   grid.innerHTML='';
 
+  const taskMap = buildTaskDateMap();
+  const noteMap = buildNoteMap();
+
   const firstDow=new Date(year,month-1,1).getDay();
   const dim=new Date(year,month,0).getDate();
 
@@ -1091,11 +1225,35 @@ function renderGrid(gridId, year, month, todayDate){
       else if(dow===6) cls+=' worksat';
     }
 
+    const dateStr=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayTasks = taskMap[dateStr] || [];
+    const dayNotes = noteMap[dateStr] || [];
+
     const c=document.createElement('div');
     c.className=cls;
+    c.dataset.date=dateStr;
+
     const ttl=e&&e.type==='EVENT'&&e.name?(EVENT_LABELS[e.name]||e.name):'';
     if(ttl)c.title=ttl;
-    c.innerHTML=`<div class="dc-num">${d}</div><div class="dc-lunar">${ls}</div>`;
+
+    // Indicators top-right
+    let marksHtml = '';
+    if(dayTasks.length || dayNotes.length){
+      const dots = [
+        ...dayTasks.filter(x=>x.role==='start').map(()=>'<span class="dcm dcm-s"></span>'),
+        ...dayTasks.filter(x=>x.role==='end').map(()=>'<span class="dcm dcm-e"></span>'),
+        ...dayNotes.map(()=>'<span class="dcm dcm-n"></span>'),
+      ].slice(0,3).join('');
+      marksHtml = `<div class="dc-marks">${dots}</div>`;
+    }
+
+    c.innerHTML=`${marksHtml}<div class="dc-num">${d}</div><div class="dc-lunar">${ls}</div>`;
+
+    // Click → popup
+    if(!cls.includes('empty')){
+      c.addEventListener('click', () => showDayPopup(dateStr, dayTasks, dayNotes, lr));
+    }
+
     grid.appendChild(c);
   }
 
@@ -1369,6 +1527,7 @@ async function loadGantt() {
     document.getElementById('gantt-src').textContent = '⚠ fallback data';
   }
 
+  PLAN_TASKS = tasks;  // sync to global for calendar indicators
   buildRuler();
   buildGanttRows(tasks);
 }
@@ -1489,9 +1648,84 @@ document.querySelectorAll('.crypto-tab').forEach(btn => {
 });
 
 /* ════════════════════════════
+   CALENDAR DATA LOAD & POPUP
+════════════════════════════ */
+async function loadCalendarData() {
+  try {
+    const [rp, rn] = await Promise.all([
+      fetch('actionplan.json').catch(() => null),
+      fetch('calendar_notes.json').catch(() => null)
+    ]);
+    if (rp && rp.ok) PLAN_TASKS = await rp.json();
+    if (rn && rn.ok) CAL_NOTES  = await rn.json();
+  } catch(e) { console.warn('loadCalendarData:', e); }
+  buildCalendars();
+}
+
+function showDayPopup(dateStr, dayTasks, dayNotes, lr) {
+  // Parse date for display
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const solar = new Date(y, m-1, d);
+  const lunar  = convertSolar2Lunar(d, m, y, 7);
+
+  document.getElementById('dp-date').textContent =
+    `${pad(d)}/${pad(m)}/${y} — ${VI_DAYS[solar.getDay()]}`;
+  document.getElementById('dp-lunar').textContent =
+    `Âm: ${lunar[0]}/${lunar[1]}/${lunar[2]}`;
+
+  // Tasks section
+  const tasksEl = document.getElementById('dp-tasks');
+  const tasksWrap = document.getElementById('dp-tasks-wrap');
+  if (dayTasks.length === 0) {
+    tasksEl.innerHTML = '<div class="dp-empty">Không có kế hoạch</div>';
+  } else {
+    tasksEl.innerHTML = dayTasks.map(({task: t, role}) => {
+      const badge = role === 'start'
+        ? '<span class="dp-task-badge dp-badge-s">BẮT ĐẦU</span>'
+        : '<span class="dp-task-badge dp-badge-e">KẾT THÚC</span>';
+      const prioClass = `dp-prio-${t.priority || 'B'}`;
+      return `<div class="dp-task-item">
+        ${badge}
+        <div class="dp-task-info">
+          <div class="dp-task-name">${t.title}</div>
+          <div class="dp-task-sub">
+            <span class="dp-prio ${prioClass}">${t.priority || 'B'}</span>
+            ${t.assignee ? t.assignee + '  · ' : ''}${t.progress}%  ·  ${t.status}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Notes section
+  const notesEl = document.getElementById('dp-notes');
+  const notesWrap = document.getElementById('dp-notes-wrap');
+  if (dayNotes.length === 0) {
+    notesEl.innerHTML = '<div class="dp-empty">Không có ghi chú</div>';
+  } else {
+    notesEl.innerHTML = dayNotes.map(n =>
+      `<div class="dp-note-item">
+        <span class="dp-note-icon">📝</span>
+        <div class="dp-note-text">${n.text}</div>
+      </div>`
+    ).join('');
+  }
+
+  document.getElementById('day-backdrop').classList.add('show');
+}
+
+// Close popup
+document.getElementById('day-backdrop').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+document.getElementById('dp-close').addEventListener('click', () => {
+  document.getElementById('day-backdrop').classList.remove('show');
+});
+
+/* ════════════════════════════
    INIT
 ════════════════════════════ */
-buildCalendars();
+loadCalendarData();
 fetchWeather();
 fetchCrypto();
 tick();

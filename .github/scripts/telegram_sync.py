@@ -10,6 +10,7 @@ BOT_TOKEN     = os.environ['TELEGRAM_BOT_TOKEN']
 ALLOWED_CHAT  = int(os.environ['TELEGRAM_CHAT_ID'])
 OFFSET_FILE   = '.github/telegram_offset.txt'
 DATA_FILE     = 'actionplan.json'
+NOTES_FILE    = 'calendar_notes.json'
 
 # ── Telegram helpers ─────────────────────────────────────────────────
 def get_updates(offset=None):
@@ -40,6 +41,16 @@ def save(tasks):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(tasks, f, ensure_ascii=False, indent=2)
 
+def load_notes():
+    if not os.path.exists(NOTES_FILE):
+        return []
+    with open(NOTES_FILE, encoding='utf-8') as f:
+        return json.load(f)
+
+def save_notes(notes):
+    with open(NOTES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(notes, f, ensure_ascii=False, indent=2)
+
 def load_offset():
     if os.path.exists(OFFSET_FILE):
         t = open(OFFSET_FILE).read().strip()
@@ -69,6 +80,12 @@ Ngày định dạng: <b>YYYY-MM-DD</b>
 ✅ <b>Đánh dấu xong:</b>  /done tên hoặc ID
 ✏️ <b>Cập nhật %:</b>     /update tên hoặc ID | 75
 🗑 <b>Xóa kế hoạch:</b>   /xoa tên hoặc ID
+
+📝 <b>Thêm ghi chú lịch:</b>
+<code>/ghinhu 2026-07-01 | Nội dung ghi chú</code>
+🗑 <b>Xóa ghi chú:</b>     /xoanhu ID ghi chú
+📅 <b>Xem ghi chú theo ngày:</b> /xemghu YYYY-MM-DD
+
 ❓ <b>Hướng dẫn:</b>      /help"""
 
 def cmd_them(text, tasks):
@@ -148,6 +165,41 @@ def cmd_xoa(text, tasks):
     tasks.remove(t)
     return tasks, f'🗑 Đã xóa: <b>{t["title"]}</b>'
 
+def cmd_ghinhu(text, notes):
+    body = text.split(' ', 1)[1] if ' ' in text else ''
+    parts = [p.strip() for p in body.split('|', 1)]
+    if len(parts) < 2:
+        return None, '❌ Định dạng: <code>/ghinhu YYYY-MM-DD | Nội dung</code>'
+    date_str = parts[0].strip()
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+    except ValueError:
+        return None, f'❌ Ngày sai định dạng: <b>{date_str}</b>\nDùng: YYYY-MM-DD'
+    note = {'id': 'note' + gen_id(), 'date': date_str, 'text': parts[1].strip()}
+    notes.append(note)
+    return notes, (f'📝 Đã thêm ghi chú!\n\n'
+                   f'📅 Ngày: <b>{date_str}</b>\n'
+                   f'💬 Nội dung: {note["text"]}\n'
+                   f'🆔 ID: <code>{note["id"]}</code>')
+
+def cmd_xoanhu(text, notes):
+    keyword = text.split(' ', 1)[1].strip() if ' ' in text else ''
+    found = next((n for n in notes if n['id'] == keyword), None)
+    if not found:
+        return None, f'❌ Không tìm thấy ghi chú ID: <code>{keyword}</code>'
+    notes.remove(found)
+    return notes, f'🗑 Đã xóa ghi chú: <b>{found["text"][:50]}</b>'
+
+def cmd_xemghu(text, notes):
+    date_str = text.split(' ', 1)[1].strip() if ' ' in text else ''
+    day_notes = [n for n in notes if n['date'] == date_str]
+    if not day_notes:
+        return f'📅 Không có ghi chú nào vào ngày <b>{date_str}</b>.'
+    lines = [f'📅 <b>Ghi chú ngày {date_str}:</b>\n']
+    for n in day_notes:
+        lines.append(f'• {n["text"]}  <code>[{n["id"]}]</code>')
+    return '\n'.join(lines)
+
 def cmd_ds(tasks):
     if not tasks:
         return '📋 Chưa có kế hoạch nào.'
@@ -170,8 +222,10 @@ def main():
     if not results:
         print('No new messages.')
         return
-    tasks   = load()
-    changed = False
+    tasks        = load()
+    notes        = load_notes()
+    changed      = False
+    notes_changed = False
     new_off = offset
     for upd in results:
         new_off = upd['update_id'] + 1
@@ -210,6 +264,20 @@ def main():
             send(chat_id, reply)
         elif cmd in ('/ds', '/list', '/danhsach'):
             send(chat_id, cmd_ds(tasks))
+        elif cmd in ('/ghinhu', '/addnote'):
+            new_notes, reply = cmd_ghinhu(text, notes)
+            if new_notes is not None:
+                notes = new_notes
+                notes_changed = True
+            send(chat_id, reply)
+        elif cmd in ('/xoanhu', '/delnote'):
+            new_notes, reply = cmd_xoanhu(text, notes)
+            if new_notes is not None:
+                notes = new_notes
+                notes_changed = True
+            send(chat_id, reply)
+        elif cmd in ('/xemghu', '/viewnote'):
+            send(chat_id, cmd_xemghu(text, notes))
         elif cmd in ('/help', '/start', '/huongdan'):
             send(chat_id, HELP_TEXT)
         else:
@@ -218,7 +286,12 @@ def main():
         save(tasks)
         print(f'actionplan.json updated with {len(tasks)} tasks.')
     else:
-        print('No data changes.')
+        print('No task changes.')
+    if notes_changed:
+        save_notes(notes)
+        print(f'calendar_notes.json updated with {len(notes)} notes.')
+    else:
+        print('No note changes.')
     save_offset(new_off)
 
 if __name__ == '__main__':
