@@ -335,40 +335,57 @@
     transition: background .4s, border-color .4s;
     overflow:hidden;
   }
+  /* Crypto tabs */
+  .crypto-tabs {
+    display:flex; gap:2px; margin-bottom:5px; flex-shrink:0;
+  }
+  .crypto-tab {
+    flex:1; padding:3px 0; font-size:7px; letter-spacing:.8px; text-transform:uppercase;
+    text-align:center; border-radius:2px; cursor:pointer;
+    color:var(--mist); background:transparent; border:1px solid transparent;
+    transition:all .2s;
+  }
+  .crypto-tab:hover { border-color:var(--panelb); color:var(--white); }
+  .crypto-tab.active {
+    background:rgba(200,16,46,0.15); border-color:rgba(200,16,46,0.35);
+    color:var(--red);
+  }
+
   .crypto-head {
     display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:3px; flex-shrink:0;
-  }
-  .crypto-title {
-    font-size:8px; letter-spacing:3px; color:var(--mist); opacity:.38; text-transform:uppercase;
+    margin-bottom:4px; flex-shrink:0;
   }
   .crypto-upd { font-size:7px; color:var(--dim); opacity:.5; }
-  .crypto-rule { height:1px; background:var(--gantt-line); margin-bottom:2px; flex-shrink:0; }
+  .crypto-rule { height:1px; background:var(--gantt-line); margin-bottom:3px; flex-shrink:0; }
+
+  .crypto-list-wrap { flex:1; overflow-y:auto; overflow-x:hidden; }
+  .crypto-list-wrap::-webkit-scrollbar { width:2px; }
+  .crypto-list-wrap::-webkit-scrollbar-thumb { background:rgba(168,188,216,0.2); border-radius:2px; }
 
   .crypto-row {
     display:flex; align-items:center; justify-content:space-between;
-    padding:3px 0; border-bottom:1px solid var(--gantt-line);
-    flex-shrink:0;
+    padding:2.5px 0; border-bottom:1px solid var(--gantt-line);
   }
   .crypto-row:last-child { border-bottom:none; }
 
-  .crypto-left  { display:flex; align-items:center; gap:6px; }
-  .crypto-icon  { width:18px; height:18px; border-radius:50%; flex-shrink:0; object-fit:cover; }
+  .crypto-rank { font-size:7px; color:var(--dim); opacity:.5; width:12px; text-align:right; margin-right:5px; flex-shrink:0; }
+  .crypto-left  { display:flex; align-items:center; gap:5px; }
+  .crypto-icon  { width:16px; height:16px; border-radius:50%; flex-shrink:0; object-fit:cover; }
   .crypto-sym   {
     font-family:'Rajdhani',sans-serif; font-weight:700;
-    font-size:11px; color:var(--white); letter-spacing:1px;
-    transition: color .4s; min-width:36px;
+    font-size:10px; color:var(--white); letter-spacing:1px;
+    transition:color .4s; min-width:32px;
   }
-  .crypto-name  { font-size:7px; color:var(--mist); opacity:.4; letter-spacing:.5px; }
+  .crypto-name  { font-size:6.5px; color:var(--mist); opacity:.4; letter-spacing:.4px; max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .crypto-right { text-align:right; }
   .crypto-price {
     font-family:'Share Tech Mono',monospace;
-    font-size:11px; color:var(--white); letter-spacing:.5px;
-    transition: color .4s;
+    font-size:10px; color:var(--white); letter-spacing:.5px;
+    transition:color .4s;
   }
   .crypto-chg {
-    font-size:8px; letter-spacing:.3px; font-family:'Rajdhani',sans-serif; font-weight:600;
+    font-size:7.5px; letter-spacing:.3px; font-family:'Rajdhani',sans-serif; font-weight:600;
   }
   .chg-up   { color:#3DD68C; }
   .chg-down { color:#FF6B6B; }
@@ -715,12 +732,18 @@
       <!-- Crypto prices -->
       <div class="col-crypto">
         <div class="crypto-panel">
+          <div class="crypto-tabs">
+            <div class="crypto-tab active" data-tab="fav">⭐ Yêu thích</div>
+            <div class="crypto-tab" data-tab="trend">🔥 Trending</div>
+            <div class="crypto-tab" data-tab="gain">🚀 Top Gainers</div>
+          </div>
           <div class="crypto-head">
-            <div class="crypto-title">Crypto · USD</div>
             <div class="crypto-upd" id="crypto-upd">--:--</div>
           </div>
           <div class="crypto-rule"></div>
-          <div id="crypto-list"></div>
+          <div class="crypto-list-wrap">
+            <div id="crypto-list"></div>
+          </div>
         </div>
       </div>
 
@@ -1352,63 +1375,111 @@ async function loadGantt() {
 /* ════════════════════════════
    CRYPTO PRICES (CoinGecko free)
 ════════════════════════════ */
-const COIN_IDS = 'bitcoin,ethereum,solana,cosmos,dydx,babylon,tether-gold';
+/* ════ CRYPTO 3-TAB ════ */
+const FAV_IDS = 'bitcoin,ethereum,solana,cosmos,dydx,babylon,tether-gold';
+let cryptoCache = { fav: null, trend: null, gain: null };
+let activeTab = 'fav';
 
-function fmtPrice(p, sym) {
+function fmtPrice(p) {
   if (p == null) return '--';
-  if (sym === 'XAUT' || sym === 'BTC') return '$' + p.toLocaleString('en-US', {maximumFractionDigits:0});
-  if (p >= 1000) return '$' + p.toLocaleString('en-US', {maximumFractionDigits:0});
-  if (p >= 1)    return '$' + p.toFixed(2);
-  if (p >= 0.01) return '$' + p.toFixed(4);
+  if (p >= 10000) return '$' + p.toLocaleString('en-US', {maximumFractionDigits:0});
+  if (p >= 1)     return '$' + p.toFixed(2);
+  if (p >= 0.01)  return '$' + p.toFixed(4);
   return '$' + p.toFixed(6);
 }
 
 function fmtChg(c) {
   if (c == null) return {txt:'--', cls:'chg-flat'};
-  const s = (c >= 0 ? '▲' : '▼') + ' ' + Math.abs(c).toFixed(2) + '%';
+  const s = (c >= 0 ? '▲' : '▼') + Math.abs(c).toFixed(2) + '%';
   return {txt: s, cls: c >= 0 ? 'chg-up' : 'chg-down'};
 }
 
-async function fetchCrypto() {
-  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${COIN_IDS}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`;
-  try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(r.status);
-    const data = await r.json();
-
-    const list = document.getElementById('crypto-list');
-    list.innerHTML = '';
-
-    data.forEach(coin => {
-      const p   = coin.current_price;
-      const chg = coin.price_change_percentage_24h;
-      const {txt, cls} = fmtChg(chg);
-      const sym = coin.symbol.toUpperCase();
-
-      const row = document.createElement('div');
-      row.className = 'crypto-row';
-      row.innerHTML = `
-        <div class="crypto-left">
-          <img class="crypto-icon" src="${coin.image}" alt="${sym}" loading="lazy">
-          <div>
-            <div class="crypto-sym">${sym}</div>
-            <div class="crypto-name">${coin.name}</div>
-          </div>
+function renderCryptoRows(coins) {
+  const list = document.getElementById('crypto-list');
+  list.innerHTML = '';
+  coins.forEach((coin, i) => {
+    const {txt, cls} = fmtChg(coin.chg);
+    const row = document.createElement('div');
+    row.className = 'crypto-row';
+    row.innerHTML = `
+      <span class="crypto-rank">${i+1}</span>
+      <div class="crypto-left">
+        <img class="crypto-icon" src="${coin.img}" alt="${coin.sym}" loading="lazy">
+        <div>
+          <div class="crypto-sym">${coin.sym}</div>
+          <div class="crypto-name">${coin.name}</div>
         </div>
-        <div class="crypto-right">
-          <div class="crypto-price">${fmtPrice(p, sym)}</div>
-          <div class="crypto-chg ${cls}">${txt}</div>
-        </div>`;
-      list.appendChild(row);
-    });
+      </div>
+      <div class="crypto-right">
+        <div class="crypto-price">${fmtPrice(coin.price)}</div>
+        <div class="crypto-chg ${cls}">${txt}</div>
+      </div>`;
+    list.appendChild(row);
+  });
+  const now = vnNow();
+  document.getElementById('crypto-upd').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
 
-    const now = vnNow();
-    document.getElementById('crypto-upd').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+async function loadFav() {
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${FAV_IDS}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.map(c => ({sym: c.symbol.toUpperCase(), name: c.name, img: c.image, price: c.current_price, chg: c.price_change_percentage_24h}));
+}
+
+async function loadTrend() {
+  const r = await fetch('https://api.coingecko.com/api/v3/search/trending');
+  const d = await r.json();
+  // Trending returns coin items; enrich with price from markets
+  const ids = d.coins.slice(0,10).map(c => c.item.id).join(',');
+  const r2  = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h`);
+  const d2  = await r2.json();
+  // Build a map for price lookup
+  const pm = {};
+  d2.forEach(c => { pm[c.id] = c; });
+  return d.coins.slice(0,10).map(c => {
+    const item = c.item;
+    const md   = pm[item.id] || {};
+    return {
+      sym:   item.symbol.toUpperCase(),
+      name:  item.name,
+      img:   item.large || item.thumb,
+      price: md.current_price ?? null,
+      chg:   md.price_change_percentage_24h ?? null
+    };
+  });
+}
+
+async function loadGain() {
+  const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_change_percentage_24h_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h';
+  const r = await fetch(url);
+  const d = await r.json();
+  return d.map(c => ({sym: c.symbol.toUpperCase(), name: c.name, img: c.image, price: c.current_price, chg: c.price_change_percentage_24h}));
+}
+
+async function fetchCrypto(force = false) {
+  try {
+    if (!cryptoCache[activeTab] || force) {
+      if (activeTab === 'fav')   cryptoCache.fav   = await loadFav();
+      if (activeTab === 'trend') cryptoCache.trend = await loadTrend();
+      if (activeTab === 'gain')  cryptoCache.gain  = await loadGain();
+    }
+    if (cryptoCache[activeTab]) renderCryptoRows(cryptoCache[activeTab]);
   } catch(e) {
     document.getElementById('crypto-upd').textContent = 'Lỗi API';
-    console.warn('CoinGecko error:', e);
+    console.warn('CoinGecko:', e);
   }
 }
+
+// Tab click handler
+document.querySelectorAll('.crypto-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.crypto-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    fetchCrypto();
+  });
+});
 
 /* ════════════════════════════
    INIT
@@ -1420,7 +1491,7 @@ tick();
 loadGantt();
 setInterval(tick, 1000);
 setInterval(fetchWeather, 600000);
-setInterval(fetchCrypto, 120000); // cập nhật crypto mỗi 2 phút
+setInterval(() => { cryptoCache = {fav:null,trend:null,gain:null}; fetchCrypto(); }, 120000); // refresh mỗi 2 phút
 </script>
 </body>
 </html>
