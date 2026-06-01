@@ -234,9 +234,10 @@
   /* Indicators: task start/end + note — top-right corner */
   .dc-marks { position:absolute; top:1px; right:1px; display:flex; gap:1px; }
   .dcm { width:3px; height:3px; border-radius:50%; flex-shrink:0; }
-  .dcm-s { background:#64C8B4; box-shadow:0 0 3px #64C8B4; }  /* task start */
-  .dcm-e { background:#FF9050; box-shadow:0 0 3px #FF9050; }  /* task end   */
-  .dcm-n { background:#B08CE0; box-shadow:0 0 3px #B08CE0; }  /* note       */
+  .dcm-s { background:#64C8B4; box-shadow:0 0 3px #64C8B4; }              /* task start */
+  .dcm-e { background:#FF9050; box-shadow:0 0 3px #FF9050; }              /* task end   */
+  .dcm-p { width:2px; height:2px; background:#64C8B4; opacity:.45; }      /* task span  */
+  .dcm-n { background:#B08CE0; box-shadow:0 0 3px #B08CE0; }              /* note       */
 
   /* Note hover tooltip */
   .dc-note-tip {
@@ -1154,11 +1155,14 @@ let CAL_NOTES   = [];  // from calendar_notes.json
 function buildTaskDateMap() {
   const m = {};
   PLAN_TASKS.forEach(t => {
-    [t.start, t.end].forEach((d, i) => {
-      if (!d) return;
-      if (!m[d]) m[d] = [];
-      m[d].push({task: t, role: i === 0 ? 'start' : 'end'});
-    });
+    if (!t.start || !t.end) return;
+    const s = new Date(t.start), e = new Date(t.end);
+    for (let cur = new Date(s); cur <= e; cur.setDate(cur.getDate()+1)) {
+      const ds = `${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`;
+      if (!m[ds]) m[ds] = [];
+      const role = ds === t.start ? 'start' : ds === t.end ? 'end' : 'span';
+      m[ds].push({task: t, role});
+    }
   });
   return m;
 }
@@ -1369,17 +1373,27 @@ function renderGrid(gridId, year, month, todayDate){
     const alwaysShow = dayMs >= alwaysFrom && dayMs <= alwaysTo;
     let marksHtml = '';
     if(dayTasks.length || dayNotes.length){
+      const startTasks = dayTasks.filter(x=>x.role==='start');
+      const endTasks   = dayTasks.filter(x=>x.role==='end');
+      const spanTasks  = dayTasks.filter(x=>x.role==='span');
       const dots = [
-        ...dayTasks.filter(x=>x.role==='start').map(({task:t})=>{
-          const tip = (t.title.length>55 ? t.title.slice(0,52)+'…' : t.title);
+        ...startTasks.map(({task:t})=>{
+          const tip = t.title.length>55 ? t.title.slice(0,52)+'…' : t.title;
           return `<span class="dcm dcm-s"><span class="dc-note-tip" style="border-color:rgba(100,200,180,0.4)">▶ ${tip}</span></span>`;
         }),
-        ...dayTasks.filter(x=>x.role==='end').map(({task:t})=>{
-          const tip = (t.title.length>55 ? t.title.slice(0,52)+'…' : t.title);
+        ...endTasks.map(({task:t})=>{
+          const tip = t.title.length>55 ? t.title.slice(0,52)+'…' : t.title;
           return `<span class="dcm dcm-e"><span class="dc-note-tip" style="border-color:rgba(255,144,80,0.4)">■ ${tip}</span></span>`;
         }),
+        // Chỉ hiện 1 chấm span nếu không có start/end (tránh lộn xộn)
+        ...(startTasks.length===0 && endTasks.length===0 && spanTasks.length>0
+          ? [{task: spanTasks[0].task}].map(({task:t})=>{
+              const tip = t.title.length>55 ? t.title.slice(0,52)+'…' : t.title;
+              return `<span class="dcm dcm-p"><span class="dc-note-tip" style="border-color:rgba(100,200,180,0.2)">— ${tip}</span></span>`;
+            })
+          : []),
         ...dayNotes.map(n=>{
-          const tipText = n.text.length > 60 ? n.text.slice(0,57)+'…' : n.text;
+          const tipText = n.text.length>60 ? n.text.slice(0,57)+'…' : n.text;
           return `<span class="dcm dcm-n"><span class="dc-note-tip">📝 ${tipText}</span></span>`;
         }),
       ].slice(0,3).join('');
