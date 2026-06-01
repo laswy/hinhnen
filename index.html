@@ -327,39 +327,39 @@
     flex:1;
     background:var(--panel); border:1px solid var(--panelb);
     border-radius:4px;
-    padding:10px 14px 10px;
+    padding:14px 16px;
     display:flex; flex-direction:column;
-    gap:5px;
+    justify-content:space-between;
     transition: background .4s, border-color .4s;
   }
 
   .w-sec-lbl { font-size:8px; letter-spacing:3px; color:var(--mist); opacity:.38; text-transform:uppercase; }
   .w-loc      { font-size:8px; letter-spacing:2px; color:var(--mist); opacity:.38; text-transform:uppercase; }
 
-  .w-main-row { display:flex; align-items:center; gap:12px; }
-  .w-icon { font-size:40px; line-height:1; filter:drop-shadow(0 0 12px rgba(200,16,46,0.4)); }
+  .w-main-row { display:flex; align-items:center; gap:14px; flex:1; padding:10px 0; }
+  .w-icon { font-size:52px; line-height:1; filter:drop-shadow(0 0 14px rgba(200,16,46,0.4)); }
 
-  .w-temp-col { display:flex; flex-direction:column; }
+  .w-temp-col { display:flex; flex-direction:column; gap:4px; }
   .w-temp-row { display:flex; align-items:flex-start; }
   .w-temp {
     font-family:'Rajdhani',sans-serif; font-weight:700;
-    font-size:52px; color:var(--white); line-height:1; letter-spacing:-2px;
+    font-size:64px; color:var(--white); line-height:1; letter-spacing:-2px;
     transition: color .4s;
   }
   .w-unit {
-    font-family:'Rajdhani',sans-serif; font-size:18px;
-    color:var(--mist); margin-top:6px;
+    font-family:'Rajdhani',sans-serif; font-size:22px;
+    color:var(--mist); margin-top:8px;
   }
-  .w-desc { font-size:9px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
+  .w-desc { font-size:10px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
 
   .w-rule { width:100%; height:1px; background:rgba(168,188,216,0.07); }
 
-  .w-meta { display:flex; gap:12px; }
-  .mi { display:flex; flex-direction:column; align-items:center; gap:2px; }
-  .mi-val { font-size:13px; color:var(--white); transition: color .4s; }
+  .w-meta { display:flex; gap:20px; padding:8px 0 4px; }
+  .mi { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .mi-val { font-size:15px; color:var(--white); transition: color .4s; }
   .mi-lbl { font-size:7px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; }
 
-  .w-upd { font-size:8px; color:var(--dim); opacity:.35; margin-top:auto; }
+  .w-upd { font-size:8px; color:var(--dim); opacity:.35; }
 
   /* ── CRYPTO PANEL ── */
   .col-crypto {
