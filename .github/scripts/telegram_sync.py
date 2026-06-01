@@ -72,23 +72,18 @@ Ngày định dạng: <b>YYYY-MM-DD</b>
 ❓ <b>Hướng dẫn:</b>      /help"""
 
 def cmd_them(text, tasks):
-    """Thêm kế hoạch mới"""
     body = text.split(' ', 1)[1] if ' ' in text else ''
     parts = [p.strip() for p in body.split('|')]
     if len(parts) < 3:
         return None, '❌ Thiếu thông tin.\n\nĐịnh dạng:\n<code>/them Tên | Từ ngày | Đến ngày | Ưu tiên | Phụ trách</code>'
-
-    # Validate dates
     for dt_str in [parts[1], parts[2]]:
         try:
             datetime.strptime(dt_str, '%Y-%m-%d')
         except ValueError:
             return None, f'❌ Ngày sai định dạng: <b>{dt_str}</b>\nDùng: YYYY-MM-DD (vd: 2026-07-01)'
-
     prio = parts[3].upper() if len(parts) > 3 else 'B'
     if prio not in ('A', 'B', 'C'):
         prio = 'B'
-
     task = {
         'id':        gen_id(),
         'title':     parts[0].upper(),
@@ -112,11 +107,9 @@ def cmd_them(text, tasks):
 
 def find_task(tasks, keyword):
     kw = keyword.lower().strip()
-    # Exact ID match first
     for t in tasks:
         if t['id'] == kw:
             return t
-    # Partial title match
     for t in tasks:
         if kw in t['title'].lower():
             return t
@@ -170,79 +163,62 @@ def cmd_ds(tasks):
 def main():
     offset  = load_offset()
     updates = get_updates(offset)
-
     if not updates.get('ok'):
         print('Telegram API error:', updates)
         sys.exit(1)
-
     results = updates.get('result', [])
     if not results:
         print('No new messages.')
         return
-
-    tasks    = load()
-    changed  = False
-    new_off  = offset
-
+    tasks   = load()
+    changed = False
+    new_off = offset
     for upd in results:
         new_off = upd['update_id'] + 1
         msg     = upd.get('message', {})
         chat_id = msg.get('chat', {}).get('id')
         text    = (msg.get('text') or '').strip()
-
-        # Chỉ xử lý tin từ chat được phép
         if chat_id != ALLOWED_CHAT:
             print(f'Ignored message from chat {chat_id}')
             continue
-
         if not text:
             continue
-
-        cmd = text.split()[0].lower().split('@')[0]  # strip @botname suffix
-
+        cmd = text.split()[0].lower().split('@')[0]
         if cmd in ('/them', '/add'):
             new_tasks, reply = cmd_them(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks
                 changed = True
             send(chat_id, reply)
-
         elif cmd in ('/done', '/xong'):
             new_tasks, reply = cmd_done(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks
                 changed = True
             send(chat_id, reply)
-
         elif cmd == '/update':
             new_tasks, reply = cmd_update(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks
                 changed = True
             send(chat_id, reply)
-
         elif cmd in ('/xoa', '/del', '/delete'):
             new_tasks, reply = cmd_xoa(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks
                 changed = True
             send(chat_id, reply)
-
         elif cmd in ('/ds', '/list', '/danhsach'):
             send(chat_id, cmd_ds(tasks))
-
         elif cmd in ('/help', '/start', '/huongdan'):
             send(chat_id, HELP_TEXT)
-
         else:
             send(chat_id, f'❓ Lệnh không hợp lệ: <code>{cmd}</code>\nGửi /help để xem hướng dẫn.')
-
     if changed:
         save(tasks)
         print(f'actionplan.json updated with {len(tasks)} tasks.')
     else:
         print('No data changes.')
-
     save_offset(new_off)
 
 if __name__ == '__main__':
