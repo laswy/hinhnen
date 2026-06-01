@@ -82,9 +82,9 @@ Ngày định dạng: <b>YYYY-MM-DD</b>
 🗑 <b>Xóa kế hoạch:</b>   /xoa tên hoặc ID
 
 📝 <b>Thêm ghi chú lịch:</b>
-<code>/ghinhu 2026-07-01 | Nội dung ghi chú</code>
-🗑 <b>Xóa ghi chú:</b>     /xoanhu ID ghi chú
-📅 <b>Xem ghi chú theo ngày:</b> /xemghu YYYY-MM-DD
+<code>/ghichu 2026-07-01 | Nội dung ghi chú</code>
+🗑 <b>Xóa ghi chú:</b>     /xoaghichu ID ghi chú
+📅 <b>Xem ghi chú theo ngày:</b> /xemghichu YYYY-MM-DD
 
 ❓ <b>Hướng dẫn:</b>      /help"""
 
@@ -169,7 +169,7 @@ def cmd_ghinhu(text, notes):
     body = text.split(' ', 1)[1] if ' ' in text else ''
     parts = [p.strip() for p in body.split('|', 1)]
     if len(parts) < 2:
-        return None, '❌ Định dạng: <code>/ghinhu YYYY-MM-DD | Nội dung</code>'
+        return None, '❌ Định dạng: <code>/ghichu YYYY-MM-DD | Nội dung</code>'
     date_str = parts[0].strip()
     try:
         datetime.strptime(date_str, '%Y-%m-%d')
@@ -264,19 +264,19 @@ def main():
             send(chat_id, reply)
         elif cmd in ('/ds', '/list', '/danhsach'):
             send(chat_id, cmd_ds(tasks))
-        elif cmd in ('/ghinhu', '/addnote'):
+        elif cmd in ('/ghichu', '/addnote'):
             new_notes, reply = cmd_ghinhu(text, notes)
             if new_notes is not None:
                 notes = new_notes
                 notes_changed = True
             send(chat_id, reply)
-        elif cmd in ('/xoanhu', '/delnote'):
+        elif cmd in ('/xoaghichu', '/delnote'):
             new_notes, reply = cmd_xoanhu(text, notes)
             if new_notes is not None:
                 notes = new_notes
                 notes_changed = True
             send(chat_id, reply)
-        elif cmd in ('/xemghu', '/viewnote'):
+        elif cmd in ('/xemghichu', '/viewnote'):
             send(chat_id, cmd_xemghu(text, notes))
         elif cmd in ('/help', '/start', '/huongdan'):
             send(chat_id, HELP_TEXT)
