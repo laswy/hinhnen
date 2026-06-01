@@ -239,6 +239,7 @@
     transition:opacity .15s, transform .15s;
   }
   .dc:hover .dc-note-tip { opacity:1; transform:translateY(0); }
+  .dc-marks.dc-tip-always .dc-note-tip { opacity:1; transform:translateY(0); }
 
   .dc.empty .dc-num, .dc.empty .dc-lunar { opacity:0; }
 
@@ -1210,6 +1211,12 @@ function renderGrid(gridId, year, month, todayDate){
   const taskMap = buildTaskDateMap();
   const noteMap = buildNoteMap();
 
+  // Khoảng ngày luôn hiển thị tooltip: hôm nay -2 → hôm nay +1
+  const vn0 = vnNow();
+  const todayMs = new Date(vn0.getFullYear(), vn0.getMonth(), vn0.getDate()).getTime();
+  const alwaysFrom = todayMs - 2*86400000;
+  const alwaysTo   = todayMs + 1*86400000;
+
   const firstDow=new Date(year,month-1,1).getDay();
   const dim=new Date(year,month,0).getDate();
 
@@ -1252,6 +1259,8 @@ function renderGrid(gridId, year, month, todayDate){
     if(ttl)c.title=ttl;
 
     // Indicators top-right
+    const dayMs = new Date(year, month-1, d).getTime();
+    const alwaysShow = dayMs >= alwaysFrom && dayMs <= alwaysTo;
     let marksHtml = '';
     if(dayTasks.length || dayNotes.length){
       const dots = [
@@ -1268,7 +1277,8 @@ function renderGrid(gridId, year, month, todayDate){
           return `<span class="dcm dcm-n"><span class="dc-note-tip">📝 ${tipText}</span></span>`;
         }),
       ].slice(0,3).join('');
-      marksHtml = `<div class="dc-marks">${dots}</div>`;
+      const alwaysCls = alwaysShow ? ' dc-tip-always' : '';
+      marksHtml = `<div class="dc-marks${alwaysCls}">${dots}</div>`;
     }
 
     c.innerHTML=`${marksHtml}<div class="dc-num">${d}</div><div class="dc-lunar">${ls}</div>`;
