@@ -815,8 +815,8 @@
     /* Gantt */
     .right-half { display:contents; }
     .right-top  { display:none !important; }
-    .right-bot  { flex:0 0 auto; }
-    .gantt-panel { padding:6px 8px; max-height:160px; overflow:hidden; }
+    .right-bot  { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .gantt-panel { flex:1; min-height:0; padding:6px 8px; overflow:hidden; }
     .gantt-head  { margin-bottom:3px; }
     .gantt-title { font-size:10px; }
     .gantt-legend { display:none; }
@@ -829,8 +829,8 @@
     .gt-sub  { font-size:6px; }
 
     /* Crypto */
-    .col-crypto { flex:0 0 auto; }
-    .crypto-panel { padding:5px 8px; max-height:130px; }
+    .col-crypto { flex:1; min-height:0; display:flex; flex-direction:column; }
+    .crypto-panel { flex:1; min-height:0; padding:5px 8px; overflow:hidden; }
     .crypto-tabs  { margin-bottom:3px; }
     .crypto-tab   { font-size:7px; padding:2px 0; }
     .crypto-row   { padding:1.5px 0; }
