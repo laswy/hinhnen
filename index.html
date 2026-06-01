@@ -322,6 +322,58 @@
 
   .w-upd { font-size:8px; color:var(--dim); opacity:.35; margin-top:auto; }
 
+  /* ── CRYPTO PANEL ── */
+  .col-crypto {
+    flex:1.2; display:flex; flex-direction:column;
+    animation:fadeUp .6s .18s ease both;
+  }
+  .crypto-panel {
+    flex:1;
+    background:var(--panel); border:1px solid var(--panelb);
+    border-radius:4px; padding:10px 12px 8px;
+    display:flex; flex-direction:column; gap:4px;
+    transition: background .4s, border-color .4s;
+    overflow:hidden;
+  }
+  .crypto-head {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:3px; flex-shrink:0;
+  }
+  .crypto-title {
+    font-size:8px; letter-spacing:3px; color:var(--mist); opacity:.38; text-transform:uppercase;
+  }
+  .crypto-upd { font-size:7px; color:var(--dim); opacity:.5; }
+  .crypto-rule { height:1px; background:var(--gantt-line); margin-bottom:2px; flex-shrink:0; }
+
+  .crypto-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:3px 0; border-bottom:1px solid var(--gantt-line);
+    flex-shrink:0;
+  }
+  .crypto-row:last-child { border-bottom:none; }
+
+  .crypto-left  { display:flex; align-items:center; gap:6px; }
+  .crypto-icon  { font-size:13px; line-height:1; }
+  .crypto-sym   {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:11px; color:var(--white); letter-spacing:1px;
+    transition: color .4s; min-width:36px;
+  }
+  .crypto-name  { font-size:7px; color:var(--mist); opacity:.4; letter-spacing:.5px; }
+
+  .crypto-right { text-align:right; }
+  .crypto-price {
+    font-family:'Share Tech Mono',monospace;
+    font-size:11px; color:var(--white); letter-spacing:.5px;
+    transition: color .4s;
+  }
+  .crypto-chg {
+    font-size:8px; letter-spacing:.3px; font-family:'Rajdhani',sans-serif; font-weight:600;
+  }
+  .chg-up   { color:#3DD68C; }
+  .chg-down { color:#FF6B6B; }
+  .chg-flat { color:var(--mist); opacity:.5; }
+
   /* ── DATE + TIME (compact) ── */
   .col-datetime {
     flex:2; display:flex; flex-direction:column;
@@ -655,6 +707,20 @@
             <div class="mi"><div class="mi-val" id="w-feel">--°</div><div class="mi-lbl">Cảm giác</div></div>
           </div>
           <div class="w-upd" id="w-upd">--:--</div>
+        </div>
+      </div>
+
+      <div class="vsep-right"></div>
+
+      <!-- Crypto prices -->
+      <div class="col-crypto">
+        <div class="crypto-panel">
+          <div class="crypto-head">
+            <div class="crypto-title">Crypto · USD</div>
+            <div class="crypto-upd" id="crypto-upd">--:--</div>
+          </div>
+          <div class="crypto-rule"></div>
+          <div id="crypto-list"></div>
         </div>
       </div>
 
@@ -1284,14 +1350,86 @@ async function loadGantt() {
 }
 
 /* ════════════════════════════
+   CRYPTO PRICES (CoinGecko free)
+════════════════════════════ */
+const COINS = [
+  { id:'bitcoin',      sym:'BTC',  icon:'₿',  name:'Bitcoin'      },
+  { id:'ethereum',     sym:'ETH',  icon:'Ξ',  name:'Ethereum'     },
+  { id:'solana',       sym:'SOL',  icon:'◎',  name:'Solana'       },
+  { id:'cosmos',       sym:'ATOM', icon:'⚛',  name:'Cosmos'       },
+  { id:'dydx',         sym:'DYDX', icon:'◈',  name:'dYdX'         },
+  { id:'babylon',      sym:'BABY', icon:'🏛',  name:'Babylon'      },
+  { id:'tether-gold',  sym:'XAUT', icon:'🥇',  name:'Tether Gold'  },
+];
+
+function fmtPrice(p, sym) {
+  if (p == null) return '--';
+  if (sym === 'XAUT' || sym === 'BTC') return '$' + p.toLocaleString('en-US', {maximumFractionDigits:0});
+  if (p >= 1000) return '$' + p.toLocaleString('en-US', {maximumFractionDigits:0});
+  if (p >= 1)    return '$' + p.toFixed(2);
+  if (p >= 0.01) return '$' + p.toFixed(4);
+  return '$' + p.toFixed(6);
+}
+
+function fmtChg(c) {
+  if (c == null) return {txt:'--', cls:'chg-flat'};
+  const s = (c >= 0 ? '▲' : '▼') + ' ' + Math.abs(c).toFixed(2) + '%';
+  return {txt: s, cls: c >= 0 ? 'chg-up' : 'chg-down'};
+}
+
+async function fetchCrypto() {
+  const ids = COINS.map(c => c.id).join(',');
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+
+    const list = document.getElementById('crypto-list');
+    list.innerHTML = '';
+
+    COINS.forEach(coin => {
+      const d   = data[coin.id] || {};
+      const p   = d.usd;
+      const chg = d.usd_24h_change;
+      const {txt, cls} = fmtChg(chg);
+
+      const row = document.createElement('div');
+      row.className = 'crypto-row';
+      row.innerHTML = `
+        <div class="crypto-left">
+          <span class="crypto-icon">${coin.icon}</span>
+          <div>
+            <div class="crypto-sym">${coin.sym}</div>
+            <div class="crypto-name">${coin.name}</div>
+          </div>
+        </div>
+        <div class="crypto-right">
+          <div class="crypto-price">${fmtPrice(p, coin.sym)}</div>
+          <div class="crypto-chg ${cls}">${txt}</div>
+        </div>`;
+      list.appendChild(row);
+    });
+
+    const now = vnNow();
+    document.getElementById('crypto-upd').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  } catch(e) {
+    document.getElementById('crypto-upd').textContent = 'Lỗi API';
+    console.warn('CoinGecko error:', e);
+  }
+}
+
+/* ════════════════════════════
    INIT
 ════════════════════════════ */
 buildCalendars();
 fetchWeather();
+fetchCrypto();
 tick();
 loadGantt();
 setInterval(tick, 1000);
 setInterval(fetchWeather, 600000);
+setInterval(fetchCrypto, 120000); // cập nhật crypto mỗi 2 phút
 </script>
 </body>
 </html>
