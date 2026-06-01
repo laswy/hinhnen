@@ -1156,7 +1156,7 @@ function calcWorkdays(year,month){
     const dow=new Date(year,month-1,d).getDay();
     if(dow===0)continue;
     const e=sm[d];
-    if(e){if(['HOLIDAY','TET','COMP_OFF','OFF'].includes(e.type))continue;c++;}
+    if(e){if(['HOLIDAY','TET','COMP_OFF','OFF','EVENT'].includes(e.type))continue;c++;}
     else{c++;}
   }
   return c;
