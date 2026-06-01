@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1366,height=768">
+<title>VN–JP Wallpaper 1366×768</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;700&family=Rajdhani:wght@300;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --red:    #C8102E;
+    --gold:   #D4A843;
+    --pink:   #64C8B4;
+    --purple: #B08CE0;
+    --navy:   #070D1B;
+    --mist:   #8AAAC8;
+    --white:  #EDF1F7;
+    --dim:    rgba(168,188,216,0.30);
+    --panel:  rgba(255,255,255,0.022);
+    --panelb: rgba(168,188,216,0.06);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:1366px; height:768px;
+    overflow:hidden;
+    background:var(--navy);
+    font-family:'Share Tech Mono', monospace;
+  }
+
+  /* ── Background layers ── */
+  #nebula, #gears { position:absolute; inset:0; width:100%; height:100%; }
+
+  .grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(168,188,216,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(168,188,216,0.025) 1px, transparent 1px);
+    background-size:57px 57px; pointer-events:none;
+  }
+
+  .vignette {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse 90% 90% at 50% 50%, transparent 5%, rgba(4,8,18,0.9) 100%);
+    pointer-events:none;
+  }
+
+  /* Corner marks */
+  .cm { position:absolute; width:32px; height:32px; }
+  .cm::before, .cm::after { content:''; position:absolute; background:var(--mist); opacity:.25; }
+  .cm::before { width:1px; height:100%; } .cm::after { width:100%; height:1px; }
+  .cm.tl{top:28px;left:28px} .cm.tr{top:28px;right:28px}
+  .cm.tr::before{right:0;left:auto} .cm.tr::after{right:0}
+  .cm.bl{bottom:28px;left:28px} .cm.bl::before{bottom:0;top:auto} .cm.bl::after{bottom:0;top:auto}
+  .cm.br{bottom:28px;right:28px}
+  .cm.br::before{bottom:0;top:auto;right:0;left:auto} .cm.br::after{bottom:0;top:auto;right:0}
+
+  .aline { position:absolute; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,var(--red),transparent); opacity:.14; }
+  .aline.t { top:60px; } .aline.b { bottom:60px; }
+
+  /* ══════════════════════════════════════
+     OUTER STAGE
+  ══════════════════════════════════════ */
+  .stage {
+    position:absolute; inset:0;
+    display:flex;
+    padding:70px 34px 70px 34px;
+    gap:0;
+  }
+
+  /* Vertical separator (left | right) */
+  .vsep-main {
+    width:1px; flex-shrink:0; align-self:stretch;
+    background:linear-gradient(180deg,transparent,rgba(200,16,46,0.25),transparent);
+    margin:0 28px;
+  }
+
+  /* ══════════════════════════════════════
+     LEFT HALF — 2 stacked calendars
+  ══════════════════════════════════════ */
+  .left-half {
+    width:580px; flex-shrink:0;
+    display:flex; flex-direction:column;
+    gap:10px;
+  }
+
+  /* each calendar takes equal height */
+  .cal-wrap {
+    flex:1; display:flex; flex-direction:column;
+    animation:fadeUp .6s ease both;
+  }
+  .cal-wrap.next { animation-delay:.1s; }
+
+  .cal-panel {
+    flex:1;
+    background:var(--panel); border:1px solid var(--panelb);
+    border-radius:4px;
+    padding:12px 14px 10px;
+    display:flex; flex-direction:column;
+  }
+
+  /* Calendar header */
+  .cal-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+
+  .cal-month-big {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:22px; color:var(--white); letter-spacing:2px; line-height:1;
+  }
+  .cal-month-jp {
+    font-family:'Noto Serif JP',serif; font-weight:300;
+    font-size:9px; color:var(--mist); letter-spacing:2px; opacity:.5; margin-top:2px;
+  }
+
+  .cal-right { text-align:right; }
+  .cal-year { font-size:9px; color:var(--mist); letter-spacing:2px; opacity:.4; }
+  .cal-wd-row { display:flex; align-items:center; gap:4px; justify-content:flex-end; margin-top:2px; }
+  .cal-wd-num {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:20px; color:var(--gold); line-height:1;
+  }
+  .cal-wd-lbl { font-size:7px; color:var(--gold); letter-spacing:1px; opacity:.6; text-transform:uppercase; line-height:1.3; }
+
+  .cal-rule { height:1px; background:linear-gradient(90deg,var(--red),rgba(200,16,46,0.05)); margin-bottom:5px; opacity:.4; }
+
+  /* Legend */
+  .cal-legend { display:flex; gap:8px; margin-bottom:5px; flex-wrap:wrap; align-items:center; }
+  .leg { display:flex; align-items:center; gap:3px; }
+  .leg-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .leg-dot.r  { background:var(--red); box-shadow:0 0 3px var(--red); }
+  .leg-dot.g  { background:var(--gold); box-shadow:0 0 3px var(--gold); }
+  .leg-dot.b  { background:var(--mist); opacity:.4; }
+  .leg-dot.p  { background:var(--pink); box-shadow:0 0 3px var(--pink); }
+  .leg-dot.v  { background:var(--purple); }
+  .leg-txt { font-size:7px; color:var(--dim); letter-spacing:.6px; text-transform:uppercase; }
+
+  /* Day-of-week header */
+  .cal-dow { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; margin-bottom:2px; }
+  .dow-c {
+    text-align:center; font-size:7px; letter-spacing:.5px;
+    color:var(--mist); opacity:.35; text-transform:uppercase; padding:1px 0;
+  }
+  .dow-c.s { color:var(--red); opacity:.5; }
+
+  /* Day cells */
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; flex:1; }
+
+  .dc {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-radius:2px; position:relative; min-height:0;
+  }
+  .dc-num   { font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; color:var(--mist); line-height:1.1; opacity:.58; }
+  .dc-lunar { font-size:6px; color:var(--dim); opacity:.6; line-height:1; }
+
+  .dc.empty .dc-num, .dc.empty .dc-lunar { opacity:0; }
+
+  .dc.today { background:var(--red); border-radius:2px; box-shadow:0 0 10px rgba(200,16,46,0.6); }
+  .dc.today .dc-num { color:var(--white); opacity:1; font-size:14px; }
+  .dc.today .dc-lunar { color:rgba(255,255,255,.7); opacity:1; }
+
+  .dc.offsat { background:rgba(200,16,46,0.07); border:1px solid rgba(200,16,46,0.18); }
+  .dc.offsat .dc-num { color:#FF8080; opacity:.85; }
+  .dc.worksat .dc-num { color:var(--mist); opacity:.58; }
+  .dc.sun-col { background:rgba(200,16,46,0.07); border:1px solid rgba(200,16,46,0.18); }
+  .dc.sun-col .dc-num { color:#FF8080; opacity:.85; }
+
+  /* Holiday: red highlight */
+  .dc.holiday { background:rgba(200,16,46,0.1); border:1px solid rgba(200,16,46,0.3); }
+  .dc.holiday .dc-num { color:#FF6060; opacity:1; }
+  .dc.holiday::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--red); box-shadow:0 0 3px var(--red); }
+  .dc.holiday.today::after { display:none; }
+
+  /* TET: gold highlight */
+  .dc.tet { background:rgba(212,168,67,0.14); border:1px solid rgba(212,168,67,0.5); }
+  .dc.tet .dc-num { color:var(--gold); opacity:1; }
+  .dc.tet .dc-lunar { color:rgba(212,168,67,.75); opacity:1; }
+  .dc.tet::after { content:'🧧'; position:absolute; bottom:0; font-size:5px; line-height:1; }
+  .dc.tet.today::after { content:''; }
+
+  /* Event: teal highlight */
+  .dc.event { background:rgba(100,200,180,0.1); border:1px solid rgba(100,200,180,0.4); }
+  .dc.event .dc-num { color:var(--pink); opacity:1; }
+  .dc.event::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--pink); box-shadow:0 0 3px var(--pink); }
+  .dc.event.today::after { display:none; }
+
+  /* Comp-off: purple highlight */
+  .dc.comp-off { background:rgba(176,140,224,0.1); border:1px solid rgba(176,140,224,0.3); }
+  .dc.comp-off .dc-num { color:var(--purple); opacity:1; }
+  .dc.comp-off::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--purple); }
+  .dc.comp-off.today::after { display:none; }
+
+  /* Next-month: slightly dimmer */
+  .cal-wrap.next .dc-num { opacity:.48; }
+  .cal-wrap.next .dc.today { opacity:1; }
+  .cal-wrap.next .dc-lunar { opacity:.45; }
+
+  /* ══════════════════════════════════════
+     RIGHT HALF — weather (1/3) + datetime (2/3)
+  ══════════════════════════════════════ */
+  .right-half {
+    flex:1; min-width:0;
+    display:flex; flex-direction:row;
+    gap:0;
+  }
+
+  /* thin vertical separator between weather & datetime */
+  .vsep-right {
+    width:1px; flex-shrink:0; align-self:stretch;
+    background:linear-gradient(180deg,transparent,rgba(168,188,216,0.15),transparent);
+    margin:0 20px;
+  }
+
+  /* ── WEATHER (1/3 of right) ── */
+  .col-weather {
+    flex:1; display:flex; flex-direction:column;
+    animation:fadeUp .6s .15s ease both;
+  }
+
+  .w-panel {
+    flex:1;
+    background:var(--panel); border:1px solid var(--panelb);
+    border-radius:4px;
+    padding:16px 18px 14px;
+    display:flex; flex-direction:column;
+    gap:8px;
+  }
+
+  .w-sec-lbl { font-size:8px; letter-spacing:3px; color:var(--mist); opacity:.38; text-transform:uppercase; }
+  .w-loc      { font-size:8px; letter-spacing:2px; color:var(--mist); opacity:.38; text-transform:uppercase; }
+
+  .w-icon { font-size:52px; line-height:1; filter:drop-shadow(0 0 16px rgba(200,16,46,0.4)); }
+
+  .w-temp-row { display:flex; align-items:flex-start; }
+  .w-temp {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:72px; color:var(--white); line-height:1; letter-spacing:-2px;
+  }
+  .w-unit {
+    font-family:'Rajdhani',sans-serif; font-size:22px;
+    color:var(--mist); margin-top:10px;
+  }
+
+  .w-desc { font-size:10px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; }
+
+  .w-rule { width:100%; height:1px; background:rgba(168,188,216,0.07); }
+
+  .w-meta { display:flex; gap:16px; }
+  .mi { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .mi-val { font-size:14px; color:var(--white); }
+  .mi-lbl { font-size:7px; letter-spacing:1px; color:var(--dim); text-transform:uppercase; }
+
+  .w-upd { font-size:8px; color:var(--dim); opacity:.35; margin-top:auto; }
+
+  /* ── DATE + TIME (2/3 of right) ── */
+  .col-datetime {
+    flex:2; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:22px;
+    animation:fadeUp .6s .2s ease both;
+  }
+
+  /* Date block */
+  .date-block { text-align:center; }
+  .lbl { font-size:9px; letter-spacing:4px; color:var(--mist); opacity:.38; text-transform:uppercase; }
+
+  .day-name {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:72px; color:var(--white); line-height:1; letter-spacing:1px;
+  }
+
+  .date-num {
+    font-family:'Share Tech Mono',monospace;
+    font-size:18px; color:var(--mist); letter-spacing:4px; margin-top:4px;
+  }
+
+  .month-jp-s {
+    font-family:'Noto Serif JP',serif; font-weight:300;
+    font-size:11px; color:var(--dim); letter-spacing:3px; margin-top:2px;
+  }
+
+  /* Divider */
+  .mid-rule {
+    width:220px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(200,16,46,0.32),transparent);
+    flex-shrink:0;
+  }
+
+  /* Clocks */
+  .clocks-block { display:flex; gap:28px; justify-content:center; }
+
+  .clock-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .zone-row   { display:flex; align-items:center; gap:6px; }
+  .flag       { font-size:15px; line-height:1; }
+  .zone-lbl   { font-size:8px; letter-spacing:2px; color:var(--mist); opacity:.38; text-transform:uppercase; }
+
+  .clock-digits {
+    font-family:'Share Tech Mono',monospace;
+    font-size:52px; color:var(--white); letter-spacing:2px; line-height:1;
+  }
+  .clock-digits .sec { font-size:26px; color:var(--mist); opacity:.35; }
+  .clock-ap { font-size:8px; letter-spacing:2px; color:var(--dim); }
+  .clocks-div { width:1px; align-self:stretch; background:rgba(168,188,216,0.08); flex-shrink:0; }
+
+  /* ── BOTTOM BAR ── */
+  .bot {
+    position:absolute; bottom:28px; left:0; right:0;
+    display:flex; justify-content:center; align-items:center; gap:8px;
+  }
+  .dot {
+    width:4px; height:4px; border-radius:50%;
+    background:var(--red); box-shadow:0 0 5px var(--red);
+    animation:blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.12} }
+  .bot-txt { font-size:8px; letter-spacing:2.5px; color:var(--dim); text-transform:uppercase; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<canvas id="nebula"></canvas>
+<canvas id="gears"></canvas>
+<div class="grid"></div>
+<div class="vignette"></div>
+<div class="aline t"></div><div class="aline b"></div>
+<div class="cm tl"></div><div class="cm tr"></div>
+<div class="cm bl"></div><div class="cm br"></div>
+
+<div class="stage">
+
+  <!-- ══════ LEFT: 2 Calendars ══════ -->
+  <div class="left-half">
+
+    <!-- Current month -->
+    <div class="cal-wrap">
+      <div class="cal-panel">
+        <div class="cal-head">
+          <div>
+            <div class="cal-month-big" id="cal-mname">---</div>
+            <div class="cal-month-jp"  id="cal-mjp">--月</div>
+          </div>
+          <div class="cal-right">
+            <div class="cal-year" id="cal-year">----</div>
+            <div class="cal-wd-row">
+              <div class="cal-wd-num" id="cal-wd">--</div>
+              <div class="cal-wd-lbl">Ngày<br>Công</div>
+            </div>
+          </div>
+        </div>
+        <div class="cal-rule"></div>
+        <div class="cal-legend">
+          <div class="leg"><div class="leg-dot r"></div><div class="leg-txt">Lễ</div></div>
+          <div class="leg"><div class="leg-dot" style="background:#FF8080;opacity:.8"></div><div class="leg-txt">T7/CN nghỉ</div></div>
+          <div class="leg"><div class="leg-dot p"></div><div class="leg-txt">Sự kiện</div></div>
+          <div class="leg"><div class="leg-dot" style="background:var(--gold)"></div><div class="leg-txt">Tết 🧧</div></div>
+          <div class="leg"><div class="leg-dot v"></div><div class="leg-txt">Nghỉ bù</div></div>
+        </div>
+        <div class="cal-dow">
+          <div class="dow-c s">CN</div><div class="dow-c">T2</div><div class="dow-c">T3</div>
+          <div class="dow-c">T4</div><div class="dow-c">T5</div><div class="dow-c">T6</div>
+          <div class="dow-c">T7</div>
+        </div>
+        <div class="cal-grid" id="cal-grid-cur"></div>
+      </div>
+    </div>
+
+    <!-- Next month -->
+    <div class="cal-wrap next">
+      <div class="cal-panel" style="border-color:rgba(168,188,216,0.04)">
+        <div class="cal-head">
+          <div>
+            <div class="cal-month-big" id="cal-mname-nxt" style="font-size:18px;opacity:.7">---</div>
+            <div class="cal-month-jp"  id="cal-mjp-nxt">--月</div>
+          </div>
+          <div class="cal-right">
+            <div class="cal-year" id="cal-year-nxt">----</div>
+            <div class="cal-wd-row">
+              <div class="cal-wd-num" id="cal-wd-nxt" style="font-size:17px;opacity:.7">--</div>
+              <div class="cal-wd-lbl">Ngày<br>Công</div>
+            </div>
+          </div>
+        </div>
+        <div class="cal-rule" style="opacity:.2"></div>
+        <div class="cal-dow" style="margin-top:2px">
+          <div class="dow-c s">CN</div><div class="dow-c">T2</div><div class="dow-c">T3</div>
+          <div class="dow-c">T4</div><div class="dow-c">T5</div><div class="dow-c">T6</div>
+          <div class="dow-c">T7</div>
+        </div>
+        <div class="cal-grid" id="cal-grid-nxt"></div>
+      </div>
+    </div>
+
+  </div><!-- /left-half -->
+
+  <div class="vsep-main"></div>
+
+  <!-- ══════ RIGHT: Weather + DateTime ══════ -->
+  <div class="right-half">
+
+    <!-- Weather (1/3) -->
+    <div class="col-weather">
+      <div class="w-panel">
+        <div class="w-sec-lbl">Thời Tiết</div>
+        <div class="w-loc">📍 Bắc Ninh, VN</div>
+        <div class="w-icon" id="w-icon">⏳</div>
+        <div class="w-temp-row">
+          <div class="w-temp" id="w-temp">--</div>
+          <div class="w-unit">°C</div>
+        </div>
+        <div class="w-desc" id="w-desc">Đang tải...</div>
+        <div class="w-rule"></div>
+        <div class="w-meta">
+          <div class="mi"><div class="mi-val" id="w-hum">--%</div><div class="mi-lbl">Độ ẩm</div></div>
+          <div class="mi"><div class="mi-val" id="w-wind">--</div><div class="mi-lbl">km/h</div></div>
+          <div class="mi"><div class="mi-val" id="w-feel">--°</div><div class="mi-lbl">Cảm giác</div></div>
+        </div>
+        <div class="w-upd" id="w-upd">--:--</div>
+      </div>
+    </div>
+
+    <div class="vsep-right"></div>
+
+    <!-- Date + Time (2/3) -->
+    <div class="col-datetime">
+      <div class="date-block">
+        <div class="lbl">Hôm nay</div>
+        <div class="day-name"   id="day-name">---</div>
+        <div class="date-num"   id="date-num">-- · -- · ----</div>
+        <div class="month-jp-s" id="month-jp">--月 ----年</div>
+      </div>
+
+      <div class="mid-rule"></div>
+
+      <div class="clocks-block">
+        <div class="clock-item">
+          <div class="zone-row">
+            <span class="flag">🇻🇳</span>
+            <span class="zone-lbl">Việt Nam · UTC+7</span>
+          </div>
+          <div class="clock-digits">
+            <span id="vn-hm">--:--</span><span class="sec" id="vn-s">:--</span>
+          </div>
+          <div class="clock-ap" id="vn-ap">--</div>
+        </div>
+
+        <div class="clocks-div"></div>
+
+        <div class="clock-item">
+          <div class="zone-row">
+            <span class="flag">🇯🇵</span>
+            <span class="zone-lbl">Nhật Bản · UTC+9</span>
+          </div>
+          <div class="clock-digits">
+            <span id="jp-hm">--:--</span><span class="sec" id="jp-s">:--</span>
+          </div>
+          <div class="clock-ap" id="jp-ap">--</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /right-half -->
+
+</div><!-- /stage -->
+
+<div class="bot">
+  <div class="dot"></div>
+  <div class="bot-txt">Lịch công ty · Âm lịch · Thời tiết Bắc Ninh · Open-Meteo</div>
+  <div class="dot"></div>
+</div>
+
+<script>
+/* ════════════════════════════
+   NEBULA + STARS
+════════════════════════════ */
+const NB=document.getElementById('nebula'),NC=NB.getContext('2d');
+NB.width=1366;NB.height=768;
+const STARS=Array.from({length:180},()=>({
+  x:Math.random()*1366,y:Math.random()*768,
+  r:Math.random()*.8+.2,a:Math.random(),da:(Math.random()-.5)*.004
+}));
+function drawNebula(){
+  NC.clearRect(0,0,1366,768);
+  NC.fillStyle='#070D1B';NC.fillRect(0,0,1366,768);
+  const g1=NC.createRadialGradient(142,384,0,142,384,460);
+  g1.addColorStop(0,'rgba(200,16,46,0.08)');g1.addColorStop(1,'transparent');
+  NC.fillStyle=g1;NC.fillRect(0,0,1366,768);
+  const g2=NC.createRadialGradient(1224,384,0,1224,384,460);
+  g2.addColorStop(0,'rgba(20,50,100,0.2)');g2.addColorStop(1,'transparent');
+  NC.fillStyle=g2;NC.fillRect(0,0,1366,768);
+  STARS.forEach(s=>{
+    s.a=Math.max(.04,Math.min(.75,s.a+s.da));
+    if(s.a<=.04||s.a>=.75)s.da*=-1;
+    NC.beginPath();NC.arc(s.x,s.y,s.r,0,Math.PI*2);
+    NC.fillStyle=`rgba(168,188,216,${s.a})`;NC.fill();
+  });
+}
+
+/* ════════════════════════════
+   GEARS
+════════════════════════════ */
+const GC=document.getElementById('gears'),GX=GC.getContext('2d');
+GC.width=1366;GC.height=768;
+function mg(cx,cy,oR,iR,t,op,col,spd){return{cx,cy,oR,iR,t,op,col,spd,a:Math.random()*Math.PI*2};}
+const GL=[
+  mg(114,114,156,121,26,.07,'#A8BCD8', .0022),
+  mg(1252,654,181,140,30,.06,'#C8102E',-.0018),
+  mg(1252,114,124, 96,22,.06,'#A8BCD8', .003 ),
+  mg(114, 654,139,107,24,.07,'#C8102E',-.0028),
+  mg(396,  39, 84, 64,14,.06,'#D4A843', .0045),
+  mg(970, 722, 98, 75,16,.05,'#A8BCD8',-.0038),
+  mg( 39, 384, 70, 53,12,.05,'#C8102E', .0055),
+  mg(1327,384, 77, 58,14,.05,'#A8BCD8',-.0048),
+  mg(274, 722, 53, 40,10,.07,'#D4A843', .0078),
+  mg(1092, 41, 47, 36, 8,.06,'#C8102E',-.0088),
+  mg(683,  18, 40, 30, 8,.04,'#A8BCD8', .0068),
+  mg(683, 752, 43, 31, 8,.04,'#A8BCD8',-.0068),
+];
+function drawGear(g){
+  const{cx,cy,oR,iR,t,op,col,a}=g;
+  GX.save();GX.globalAlpha=op;GX.strokeStyle=col;GX.lineWidth=1.0;
+  GX.translate(cx,cy);GX.rotate(a);
+  GX.beginPath();GX.arc(0,0,oR,0,Math.PI*2);GX.stroke();
+  GX.beginPath();GX.arc(0,0,iR,0,Math.PI*2);GX.stroke();
+  GX.beginPath();GX.arc(0,0,oR*.11,0,Math.PI*2);GX.stroke();
+  const step=(Math.PI*2)/t,tw=step*.38;
+  GX.beginPath();
+  for(let i=0;i<t;i++){
+    const ang=i*step,a1=ang-tw,a2=ang+tw;
+    GX.moveTo(iR*Math.cos(a1),iR*Math.sin(a1));GX.lineTo(oR*Math.cos(a1),oR*Math.sin(a1));
+    GX.lineTo(oR*Math.cos(a2),oR*Math.sin(a2));GX.lineTo(iR*Math.cos(a2),iR*Math.sin(a2));
+  }
+  GX.stroke();
+  if(oR>70){
+    for(let i=0;i<6;i++){
+      const ang=i*(Math.PI*2/6);
+      GX.beginPath();
+      GX.moveTo(oR*.13*Math.cos(ang),oR*.13*Math.sin(ang));
+      GX.lineTo(iR*.84*Math.cos(ang),iR*.84*Math.sin(ang));
+      GX.stroke();
+    }
+  }
+  GX.restore();
+}
+function loop(){
+  drawNebula();
+  GX.clearRect(0,0,1366,768);
+  GL.forEach(g=>{g.a+=g.spd;drawGear(g);});
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ════════════════════════════
+   HELPERS
+════════════════════════════ */
+function pad(n){return String(n).padStart(2,'0');}
+const VI_DAYS=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+const VI_MONTHS=['THÁNG 1','THÁNG 2','THÁNG 3','THÁNG 4','THÁNG 5','THÁNG 6',
+                 'THÁNG 7','THÁNG 8','THÁNG 9','THÁNG 10','THÁNG 11','THÁNG 12'];
+const JP_MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+function vnNow(){
+  const now=new Date(),utc=now.getTime()+now.getTimezoneOffset()*60000;
+  return new Date(utc+7*3600000);
+}
+
+/* ════════════════════════════
+   COMPANY CALENDAR DATA
+════════════════════════════ */
+const CAL_DATA={
+  "2026-03": [
+    {"date":"2026-03-07","type":"OFF","sat_work":false},
+    {"date":"2026-03-21","type":"OFF","sat_work":false},
+  ],
+  "2026-04":[
+    {"date":"2026-04-11","type":"OFF","sat_work":false},
+    {"date":"2026-04-25","type":"OFF","sat_work":false},
+    {"date":"2026-04-30","type":"HOLIDAY"}
+  ],
+  "2026-05":[
+    {"date":"2026-05-01","type":"HOLIDAY"},
+    {"date":"2026-05-02","type":"OFF","sat_work":false},
+    {"date":"2026-05-23","type":"OFF","sat_work":false}
+  ],
+  "2026-06":[
+    {"date":"2026-06-12","type":"EVENT","name":"COMPANY_TRIP"},
+    {"date":"2026-06-13","type":"EVENT","name":"COMPANY_TRIP"},
+    {"date":"2026-06-27","type":"OFF","sat_work":false}
+  ],
+  "2026-07":[
+    {"date":"2026-07-11","type":"OFF","sat_work":false},
+    {"date":"2026-07-25","type":"OFF","sat_work":false}
+  ],
+  "2026-08":[
+    {"date":"2026-08-01","type":"OFF","sat_work":false},
+    {"date":"2026-08-15","type":"OFF","sat_work":false},
+    {"date":"2026-08-29","type":"EVENT","name":"FAMILY_DAY"}
+  ],
+  "2026-09":[
+    {"date":"2026-09-02","type":"HOLIDAY"},
+    {"date":"2026-09-03","type":"HOLIDAY"},
+    {"date":"2026-09-04","type":"OFF","sat_work":false},
+    {"date":"2026-09-05","type":"OFF","sat_work":false},
+    {"date":"2026-09-19","type":"OFF","sat_work":false}
+  ],
+  "2026-10":[
+    {"date":"2026-10-03","type":"OFF","sat_work":false},
+    {"date":"2026-10-17","type":"OFF","sat_work":false},
+    {"date":"2026-10-31","type":"EVENT","name":"FAMILY_DAY"}
+  ],
+  "2026-11":[
+    {"date":"2026-11-14","type":"OFF","sat_work":false},
+    {"date":"2026-11-23","type":"COMP_OFF"},
+    {"date":"2026-11-24","type":"HOLIDAY"}
+  ],
+  "2026-12":[
+    {"date":"2026-12-05","type":"OFF","sat_work":false},
+    {"date":"2026-12-19","type":"OFF","sat_work":false},
+    {"date":"2026-12-31","type":"EVENT","name":"YEAR_END_PARTY"}
+  ],
+  "2027-01":[
+    {"date":"2027-01-01","type":"HOLIDAY"},
+    {"date":"2027-01-02","type":"OFF","sat_work":false},
+    {"date":"2027-01-16","type":"OFF","sat_work":false}
+  ],
+  "2027-02":[
+    {"date":"2027-02-03","type":"TET"},{"date":"2027-02-04","type":"TET"},
+    {"date":"2027-02-05","type":"TET"},{"date":"2027-02-06","type":"TET"},
+    {"date":"2027-02-07","type":"TET"},{"date":"2027-02-08","type":"TET"},
+    {"date":"2027-02-09","type":"TET"},{"date":"2027-02-10","type":"TET"},
+    {"date":"2027-02-11","type":"TET"}
+  ],
+  "2027-03":[
+    {"date":"2027-03-06","type":"OFF","sat_work":false},
+    {"date":"2027-03-20","type":"OFF","sat_work":false}
+  ]
+};
+
+const EVENT_LABELS={'COMPANY_TRIP':'Du Lịch CT','FAMILY_DAY':'Family Day','YEAR_END_PARTY':'Tất Niên'};
+
+function buildDayMap(year,month){
+  const key=`${year}-${String(month).padStart(2,'0')}`;
+  const map={};
+  (CAL_DATA[key]||[]).forEach(e=>{const d=parseInt(e.date.split('-')[2]);map[d]=e;});
+  return{map,key};
+}
+
+function calcWorkdays(year,month){
+  const key=`${year}-${String(month).padStart(2,'0')}`;
+  const sm={};
+  (CAL_DATA[key]||[]).forEach(e=>{sm[parseInt(e.date.split('-')[2])]=e;});
+  const dim=new Date(year,month,0).getDate();
+  let c=0;
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(year,month-1,d).getDay();
+    if(dow===0)continue;
+    const e=sm[d];
+    if(e){if(['HOLIDAY','TET','COMP_OFF','OFF'].includes(e.type))continue;c++;}
+    else{c++;}
+  }
+  return c;
+}
+
+/* ════════════════════════════
+   LUNAR (Ho Ngoc Duc)
+════════════════════════════ */
+function INT(d){return Math.floor(d);}
+function jdFromDate(dd,mm,yy){var a=INT((14-mm)/12),y=yy+4800-a,m=mm+12*a-3,jd=dd+INT((153*m+2)/5)+365*y+INT(y/4)-INT(y/100)+INT(y/400)-32045;if(jd<2299161)jd=dd+INT((153*m+2)/5)+365*y+INT(y/4)-32083;return jd;}
+function newMoon(k){var T=k/1236.85,T2=T*T,T3=T2*T,dr=Math.PI/180,J=2415020.75933+29.53058868*k+0.0001178*T2-0.000000155*T3;J+=0.00033*Math.sin((166.56+132.87*T-0.009173*T2)*dr);var M=359.2242+29.10535608*k-0.0000333*T2-0.00000347*T3,Mp=306.0253+385.81691806*k+0.0107306*T2+0.00001236*T3,F=21.2964+390.67050646*k-0.0016528*T2-0.00000239*T3,C1=(0.1734-0.000393*T)*Math.sin(M*dr)+0.0021*Math.sin(2*dr*M);C1-=0.4068*Math.sin(Mp*dr)+0.0161*Math.sin(dr*2*Mp)-0.0004*Math.sin(dr*3*Mp);C1+=0.0104*Math.sin(dr*2*F)-0.0051*Math.sin(dr*(M+Mp))-0.0074*Math.sin(dr*(M-Mp));C1+=0.0004*Math.sin(dr*(2*F+M))-0.0004*Math.sin(dr*(2*F-M))-0.0006*Math.sin(dr*(2*F+Mp));C1+=0.001*Math.sin(dr*(2*F-Mp))+0.0005*Math.sin(dr*(2*Mp+M));var dt=T<-11?0.001+0.000839*T+0.0002261*T2-0.00000845*T3-0.000000081*T*T3:-0.000278+0.000265*T+0.000262*T2;return J+C1-dt;}
+function getNMD(k,tz){return INT(newMoon(k)+0.5+tz/24);}
+function sunL(jdn){var T=(jdn-2451545)/36525,T2=T*T,dr=Math.PI/180,L0=280.46646+36000.76983*T+0.0003032*T2;L0=L0-INT(L0/360)*360;var M=(357.52911+35999.05029*T-0.0001537*T2)*dr,DL=(1.914602-0.004817*T-0.000014*T2)*Math.sin(M)+(0.019993-0.000101*T)*Math.sin(2*M)+0.000289*Math.sin(3*M),L=(L0+DL)*dr,om=(125.04-1934.136*T)*dr;L=L-0.00569*dr-0.00478*Math.sin(om);return L-Math.PI*2*INT(L/(Math.PI*2));}
+function getSL(jd,tz){return INT(sunL(jd-0.5-tz/24)*6/Math.PI);}
+function getLM11(yy,tz){var off=jdFromDate(31,12,yy)-2415021,k=INT(off/29.530588853),nm=getNMD(k,tz),sl=getSL(nm,tz);if(sl>=9)nm=getNMD(k-1,tz);return nm;}
+function getLeap(a11,tz){var k=INT((a11-2415021.076998695)/29.530588853+0.5),last=0,i=1,arc=getSL(getNMD(k+i,tz),tz);do{last=arc;i++;arc=getSL(getNMD(k+i,tz),tz);}while(arc!==last&&i<14);return i-1;}
+function solar2Lunar(dd,mm,yy){
+  var tz=7,dn=jdFromDate(dd,mm,yy),k=INT((dn-2415021.076998695)/29.530588853);
+  var ms=getNMD(k+1,tz);if(ms>dn)ms=getNMD(k,tz);
+  var a11=getLM11(yy,tz),b11=a11,lY,lL=0;
+  if(a11>=ms){lY=yy;a11=getLM11(yy-1,tz);}else{lY=yy+1;b11=getLM11(yy+1,tz);}
+  var lD=dn-ms+1,diff=INT((ms-a11)/29),lM=diff+11;
+  if(b11-a11>365){var lp=getLeap(a11,tz);if(diff>=lp){lM=diff+10;if(diff===lp)lL=1;}}
+  if(lM>12)lM-=12;if(lM>=11&&diff<4)lY-=1;
+  return{d:lD,m:lM,y:lY,leap:lL};
+}
+
+/* ════════════════════════════
+   RENDER CALENDAR GRID
+════════════════════════════ */
+function renderGrid(gridId, year, month, todayDate){
+  const{map}=buildDayMap(year,month);
+  const grid=document.getElementById(gridId);
+  grid.innerHTML='';
+
+  const firstDow=new Date(year,month-1,1).getDay();
+  const dim=new Date(year,month,0).getDate();
+
+  // empty prefix
+  for(let i=0;i<firstDow;i++){
+    const c=document.createElement('div');c.className='dc empty';
+    c.innerHTML='<div class="dc-num"></div><div class="dc-lunar"></div>';
+    grid.appendChild(c);
+  }
+
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(year,month-1,d).getDay();
+    const lr=solar2Lunar(d,month,year);
+    const ls=lr.d===1?`${lr.d}/${lr.m}${lr.leap?'N':''}`:String(lr.d);
+    const e=map[d];
+    let cls='dc';
+
+    if(todayDate&&d===todayDate){
+      cls+=' today';
+    } else if(e){
+      const t=e.type;
+      if(t==='TET')           cls+=' tet';
+      else if(t==='HOLIDAY')  cls+=' holiday';
+      else if(t==='EVENT')    cls+=' event';
+      else if(t==='COMP_OFF') cls+=' comp-off';
+      else if(t==='OFF')      cls+=' offsat';
+    } else {
+      if(dow===0)      cls+=' sun-col';
+      else if(dow===6) cls+=' worksat';
+    }
+
+    const c=document.createElement('div');
+    c.className=cls;
+    const ttl=e&&e.type==='EVENT'&&e.name?(EVENT_LABELS[e.name]||e.name):'';
+    if(ttl)c.title=ttl;
+    c.innerHTML=`<div class="dc-num">${d}</div><div class="dc-lunar">${ls}</div>`;
+    grid.appendChild(c);
+  }
+
+  const filled=firstDow+dim,rem=filled%7===0?0:7-(filled%7);
+  for(let i=0;i<rem;i++){
+    const c=document.createElement('div');c.className='dc empty';
+    c.innerHTML='<div class="dc-num"></div><div class="dc-lunar"></div>';
+    grid.appendChild(c);
+  }
+}
+
+/* ════════════════════════════
+   BUILD BOTH CALENDARS
+════════════════════════════ */
+function buildCalendars(){
+  const vn=vnNow();
+  const curY=vn.getFullYear(), curM=vn.getMonth()+1, today=vn.getDate();
+
+  // Next month
+  let nxtM=curM+1, nxtY=curY;
+  if(nxtM>12){nxtM=1;nxtY++;}
+
+  // Current month
+  document.getElementById('cal-mname').textContent=VI_MONTHS[curM-1];
+  document.getElementById('cal-mjp').textContent=JP_MONTHS[curM-1];
+  document.getElementById('cal-year').textContent=curY;
+  document.getElementById('cal-wd').textContent=calcWorkdays(curY,curM);
+  renderGrid('cal-grid-cur', curY, curM, today);
+
+  // Next month
+  document.getElementById('cal-mname-nxt').textContent=VI_MONTHS[nxtM-1];
+  document.getElementById('cal-mjp-nxt').textContent=JP_MONTHS[nxtM-1];
+  document.getElementById('cal-year-nxt').textContent=nxtY;
+  document.getElementById('cal-wd-nxt').textContent=calcWorkdays(nxtY,nxtM);
+  renderGrid('cal-grid-nxt', nxtY, nxtM, null); // no "today" highlight in next month
+}
+
+/* ════════════════════════════
+   CLOCK + DATE
+════════════════════════════ */
+function tick(){
+  const now=new Date(),utc=now.getTime()+now.getTimezoneOffset()*60000;
+  const vn=new Date(utc+7*3600000),jp=new Date(utc+9*3600000);
+
+  document.getElementById('day-name').textContent=VI_DAYS[vn.getDay()];
+  document.getElementById('date-num').textContent=`${pad(vn.getDate())} · ${pad(vn.getMonth()+1)} · ${vn.getFullYear()}`;
+  document.getElementById('month-jp').textContent=`${JP_MONTHS[vn.getMonth()]} ${vn.getFullYear()}年`;
+
+  const vh=vn.getHours(),vm=vn.getMinutes(),vs=vn.getSeconds();
+  document.getElementById('vn-hm').textContent=`${pad(vh)}:${pad(vm)}`;
+  document.getElementById('vn-s').textContent=`:${pad(vs)}`;
+  document.getElementById('vn-ap').textContent=vh<12?'Buổi Sáng':vh<18?'Buổi Chiều':'Buổi Tối';
+
+  const jh=jp.getHours(),jm=jp.getMinutes(),js=jp.getSeconds();
+  document.getElementById('jp-hm').textContent=`${pad(jh)}:${pad(jm)}`;
+  document.getElementById('jp-s').textContent=`:${pad(js)}`;
+  document.getElementById('jp-ap').textContent=jh<12?'午前 (Sáng)':jh<18?'午後 (Chiều)':'夜 (Tối)';
+
+  // Rebuild calendars at midnight
+  if(vs===0&&vm===0&&vh===0) buildCalendars();
+}
+
+/* ════════════════════════════
+   WEATHER
+════════════════════════════ */
+const WDESC={0:'Quang Đãng',1:'Ít Mây',2:'Nhiều Mây',3:'U Ám',45:'Có Sương',48:'Sương Đặc',51:'Mưa Phùn',53:'Mưa Phùn',55:'Mưa Phùn',61:'Mưa Nhỏ',63:'Mưa Vừa',65:'Mưa To',80:'Mưa Rào',81:'Mưa Rào',82:'Mưa Rào Nặng',95:'Giông Bão',96:'Giông+Đá',99:'Giông Lớn'};
+const WICON={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',80:'🌦️',81:'🌦️',82:'🌧️',95:'⛈️',96:'⛈️',99:'⛈️'};
+
+async function fetchWeather(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=21.186&longitude=106.076&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&wind_speed_unit=kmh&timezone=Asia%2FBangkok');
+    const d=await r.json(),c=d.current;
+    document.getElementById('w-icon').textContent=WICON[c.weather_code]||'🌡️';
+    document.getElementById('w-temp').textContent=Math.round(c.temperature_2m);
+    document.getElementById('w-desc').textContent=WDESC[c.weather_code]||'Không rõ';
+    document.getElementById('w-hum').textContent=c.relative_humidity_2m+'%';
+    document.getElementById('w-wind').textContent=Math.round(c.wind_speed_10m);
+    document.getElementById('w-feel').textContent=Math.round(c.apparent_temperature)+'°';
+    const t=new Date();
+    document.getElementById('w-upd').textContent=`Cập nhật: ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+  }catch(e){
+    document.getElementById('w-desc').textContent='Lỗi kết nối';
+  }
+}
+
+/* ════════════════════════════
+   INIT
+════════════════════════════ */
+buildCalendars();
+fetchWeather();
+tick();
+setInterval(tick, 1000);
+setInterval(fetchWeather, 600000);
+</script>
+</body>
+</html>
