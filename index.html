@@ -732,79 +732,121 @@
   ══════════════════════════════════════ */
   @media (max-width: 768px) {
 
-    /* ── Reset fixed desktop viewport ── */
-    html, body {
-      width: 100% !important;
-      height: auto !important;
-      min-height: 100vh;
-      overflow-x: hidden;
-      overflow-y: auto;
-    }
+    /* Viewport: fit 1 màn hình, không scroll */
+    html, body { width:100% !important; height:100% !important; overflow:hidden !important; }
 
-    /* ── Hide desktop-only decoration ── */
+    /* Ẩn decoration desktop */
     #nebula, #gears, .grid, .vignette,
     .aline, .cm, .vsep-main, .vsep-right,
-    .bot, .cal-wrap.next { display: none !important; }
+    .bot, .cal-wrap.next, .mid-rule,
+    .clocks-div, .zone-lbl, .clock-ap { display:none !important; }
 
-    /* ── Theme button ── */
-    #theme-btn { top: 10px; right: 10px; width: 34px; height: 34px; font-size: 15px; }
+    /* Theme button */
+    #theme-btn { top:8px; right:8px; width:30px; height:30px; font-size:13px; }
 
-    /* Stage: thứ tự DOM do JS applyMobileLayout() xử lý */
-    .stage    { position:relative !important; flex-direction:column !important; padding:52px 10px 24px !important; gap:10px !important; }
-    .left-half  { width:100% !important; }
-    .right-half { width:100% !important; flex-direction:column !important; gap:10px !important; }
-    .right-top  { flex:none !important; flex-direction:column !important; gap:10px !important; }
-    .right-bot  { flex:none !important; height:auto !important; }
-    .col-datetime, .col-weather, .col-crypto { width:100%; }
+    /* Stage: cột dọc, lấp đầy màn hình */
+    .stage {
+      position:relative !important;
+      flex-direction:column !important;
+      padding:44px 8px 8px !important;
+      gap:6px !important;
+      height:100% !important;
+      overflow:hidden !important;
+    }
 
-    /* Calendar */
-    .cal-panel { padding:10px 10px 8px; }
-    .cal-month-big { font-size:20px; }
-    .cal-grid { gap:3px; }
-    .dc { min-height:40px; }
-    .dc-num { font-size:14px; }
-    .dc-lunar { font-size:7px; }
-    .dc-note-tip { max-width:120px; font-size:8px; }
+    /* ── Hàng trên: datetime (trái) + weather (phải) ── */
+    .mob-top-row {
+      display:flex; flex-direction:row; gap:8px;
+      flex:0 0 auto;
+    }
 
-    /* DateTime */
-    .col-datetime { align-items:center; padding:0; }
-    .date-block { text-align:center; }
-    .day-name { font-size:38px; }
-    .date-num { font-size:13px; letter-spacing:2px; }
-    .month-jp-s { font-size:10px; }
-    .mid-rule { width:80%; }
-    .clocks-block { gap:28px; justify-content:center; }
-    .clock-digits { font-size:30px; }
-    .clock-digits .sec { font-size:15px; }
+    /* Datetime — bên trái */
+    .col-datetime {
+      flex:1; display:flex; flex-direction:column;
+      justify-content:center; align-items:flex-start; padding:8px 10px;
+      background:var(--panel); border:1px solid var(--panelb); border-radius:4px;
+    }
+    .date-block { text-align:left; }
+    .lbl { display:none; }
+    .day-name { font-size:26px; line-height:1; }
+    .date-num { font-size:11px; letter-spacing:1px; margin-top:2px; }
+    .month-jp-s { font-size:8px; margin-top:1px; }
+    .clocks-block { gap:10px; margin-top:6px; }
+    .clock-digits { font-size:20px; letter-spacing:1px; }
+    .clock-digits .sec { font-size:11px; }
+    .flag { font-size:10px; }
+    .zone-row { gap:3px; }
 
-    /* Weather */
-    .w-panel { flex-direction:column; align-items:center; text-align:center; gap:6px; padding:12px 14px; }
-    .w-sec-lbl { display:none; }
-    .w-loc { text-align:center; }
-    .w-main-row { justify-content:center; gap:10px; }
-    .w-temp { font-size:44px; }
-    .w-unit { font-size:18px; }
-    .w-desc, .w-upd { text-align:center; }
-    .w-rule { width:80%; }
-    .w-meta { justify-content:center; gap:20px; }
+    /* Weather — bên phải */
+    .col-weather { flex:1; }
+    .w-panel {
+      flex-direction:column; align-items:center; justify-content:center;
+      text-align:center; padding:8px 10px; gap:3px; height:100%;
+    }
+    .w-sec-lbl, .w-upd { display:none; }
+    .w-loc { font-size:7px; margin-bottom:2px; }
+    .w-main-row { gap:6px; justify-content:center; }
+    .w-icon { font-size:30px; }
+    .w-temp { font-size:32px; letter-spacing:-1px; }
+    .w-unit { font-size:14px; margin-top:4px; }
+    .w-desc { font-size:8px; letter-spacing:1px; }
+    .w-rule { width:70%; margin:3px 0; }
+    .w-meta { gap:12px; justify-content:center; }
+    .mi-val { font-size:11px; }
+    .mi-lbl { font-size:6px; }
 
-    /* Crypto */
-    .crypto-panel { padding:10px 10px 8px; }
-    .crypto-tab { font-size:8px; }
-    .crypto-sym { font-size:11px; }
-    .crypto-price { font-size:11px; }
+    /* Lịch — flex:1 chiếm không gian còn lại */
+    .left-half { width:100% !important; flex:1; min-height:0; }
+    .cal-wrap  { flex:1; min-height:0; }
+    .cal-panel { flex:1; min-height:0; padding:6px 8px 4px; }
+    .cal-head  { margin-bottom:3px; }
+    .cal-month-big { font-size:16px; }
+    .cal-wd-num { font-size:14px; }
+    .cal-legend { display:none; }
+    .cal-rule  { margin-bottom:3px; }
+    .cal-dow   { margin-bottom:1px; }
+    .dow-c     { font-size:6px; }
+    .cal-grid  { gap:2px; flex:1; }
+    .dc { min-height:0; flex:1; }
+    .dc-num  { font-size:11px; }
+    .dc-lunar { font-size:5px; }
+    .dc-note-tip { max-width:100px; font-size:7px; }
 
     /* Gantt */
-    .gantt-panel { overflow:visible; padding:10px 10px 8px; }
+    .right-half { display:contents; }
+    .right-top  { display:none !important; }
+    .right-bot  { flex:0 0 auto; }
+    .gantt-panel { padding:6px 8px; max-height:160px; overflow:hidden; }
+    .gantt-head  { margin-bottom:3px; }
+    .gantt-title { font-size:10px; }
+    .gantt-legend { display:none; }
+    .gantt-rule  { margin-bottom:3px; }
     .gantt-body-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .gantt-ruler, .gantt-body { min-width:480px; }
+    .gantt-ruler, .gantt-body { min-width:420px; }
+    .gantt-row   { height:26px; }
+    .gantt-task-label { width:130px; }
+    .gt-name { font-size:7px; }
+    .gt-sub  { font-size:6px; }
+
+    /* Crypto */
+    .col-crypto { flex:0 0 auto; }
+    .crypto-panel { padding:5px 8px; max-height:130px; }
+    .crypto-tabs  { margin-bottom:3px; }
+    .crypto-tab   { font-size:7px; padding:2px 0; }
+    .crypto-row   { padding:1.5px 0; }
+    .crypto-sym   { font-size:9px; }
+    .crypto-name  { font-size:5.5px; }
+    .crypto-price { font-size:9px; }
+    .crypto-chg   { font-size:6.5px; }
+    .crypto-icon  { width:13px; height:13px; }
+    .crypto-icon-wrap { width:15px; height:15px; }
 
     /* Day popup — bottom sheet */
     .day-popup-backdrop { align-items:flex-end; }
     .day-popup { min-width:unset; max-width:100% !important; width:100% !important; border-radius:12px 12px 0 0; }
-    .dp-header { padding:14px 16px 10px; }
-    .dp-date { font-size:17px; }
-    .dp-body { padding:12px 16px 24px; }
+    .dp-header { padding:12px 14px 8px; }
+    .dp-date { font-size:15px; }
+    .dp-body { padding:10px 14px 20px; }
   }
 </style>
 </head>
@@ -1896,37 +1938,35 @@ function applyMobileLayout() {
   if (!stage || stage.dataset.mobileReordered) return;
   stage.dataset.mobileReordered = '1';
 
-  const leftHalf  = document.querySelector('.left-half');   // lịch
-  const rightTop  = document.querySelector('.right-top');   // datetime+weather+crypto
-  const rightBot  = document.querySelector('.right-bot');   // gantt
+  const leftHalf  = document.querySelector('.left-half');
+  const rightBot  = document.querySelector('.right-bot');
   const rightHalf = document.querySelector('.right-half');
   const vsep      = document.querySelector('.vsep-main');
-
   const colDatetime = document.querySelector('.col-datetime');
-  const vsepDt      = colDatetime ? colDatetime.previousElementSibling : null; // vsep-right trước datetime
   const colWeather  = document.querySelector('.col-weather');
   const colCrypto   = document.querySelector('.col-crypto');
+  const rightTop    = document.querySelector('.right-top');
 
-  // Ẩn các vsep không cần thiết
   document.querySelectorAll('.vsep-right').forEach(el => el.style.display = 'none');
   if (vsep) vsep.style.display = 'none';
 
-  // Xây dựng thứ tự mới trong stage:
-  // 1. col-datetime, 2. col-weather, 3. left-half (lịch), 4. right-bot (gantt), 5. col-crypto
+  // Tạo hàng gộp datetime + weather
+  const topRow = document.createElement('div');
+  topRow.className = 'mob-top-row';
+  topRow.appendChild(colDatetime);
+  topRow.appendChild(colWeather);
+  stage.insertBefore(topRow, stage.firstChild);
 
-  // Di chuyển datetime và weather ra khỏi right-top, đưa thẳng vào stage
-  stage.insertBefore(colDatetime, stage.firstChild);
-  stage.insertBefore(colWeather, leftHalf);
+  // Lịch
+  // leftHalf đứng sau topRow — đã đúng vị trí
 
-  // leftHalf (lịch) đã ở đúng chỗ (thứ 3 trong stage)
-
-  // Di chuyển right-bot (gantt) ra khỏi right-half vào stage, sau lịch
+  // Gantt
   stage.insertBefore(rightBot, rightHalf);
 
-  // right-half giờ chỉ còn right-top với col-crypto → di chuyển crypto ra stage, xóa right-half
+  // Crypto
   stage.insertBefore(colCrypto, rightHalf);
   rightHalf.remove();
-  if (rightTop.children.length === 0) rightTop.remove();
+  if (rightTop && rightTop.children.length === 0) rightTop.remove();
 }
 
 /* ════════════════════════════
