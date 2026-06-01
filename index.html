@@ -223,7 +223,22 @@
   .dcm { width:3px; height:3px; border-radius:50%; flex-shrink:0; }
   .dcm-s { background:#64C8B4; box-shadow:0 0 3px #64C8B4; }  /* task start */
   .dcm-e { background:#FF9050; box-shadow:0 0 3px #FF9050; }  /* task end   */
-  .dcm-n { background:#FFD700; box-shadow:0 0 3px #FFD700; }  /* note       */
+  .dcm-n { background:#B08CE0; box-shadow:0 0 3px #B08CE0; }  /* note       */
+
+  /* Note hover tooltip */
+  .dc-note-tip {
+    position:absolute; bottom:calc(100% + 4px); right:0;
+    background:var(--tooltip-bg); color:var(--tooltip-c);
+    border:1px solid rgba(176,140,224,0.4);
+    border-radius:4px; padding:4px 7px;
+    font-size:8px; line-height:1.5; white-space:pre-wrap;
+    max-width:140px; z-index:500;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    pointer-events:none;
+    opacity:0; transform:translateY(4px);
+    transition:opacity .15s, transform .15s;
+  }
+  .dc:hover .dc-note-tip { opacity:1; transform:translateY(0); }
 
   .dc.empty .dc-num, .dc.empty .dc-lunar { opacity:0; }
 
@@ -1242,7 +1257,10 @@ function renderGrid(gridId, year, month, todayDate){
       const dots = [
         ...dayTasks.filter(x=>x.role==='start').map(()=>'<span class="dcm dcm-s"></span>'),
         ...dayTasks.filter(x=>x.role==='end').map(()=>'<span class="dcm dcm-e"></span>'),
-        ...dayNotes.map(()=>'<span class="dcm dcm-n"></span>'),
+        ...dayNotes.map(n=>{
+          const tipText = n.text.length > 60 ? n.text.slice(0,57)+'…' : n.text;
+          return `<span class="dcm dcm-n"><span class="dc-note-tip">📝 ${tipText}</span></span>`;
+        }),
       ].slice(0,3).join('');
       marksHtml = `<div class="dc-marks">${dots}</div>`;
     }
