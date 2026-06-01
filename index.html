@@ -428,6 +428,20 @@
     background:var(--gantt-today);
     z-index:5; pointer-events:none;
   }
+  .gantt-today-line::before {
+    content: 'HÔM NAY';
+    position:absolute; top:-2px; left:3px;
+    font-size:6px; letter-spacing:.8px;
+    color:var(--red); white-space:nowrap;
+    font-family:'Share Tech Mono',monospace;
+  }
+  .gantt-today-line::after {
+    content:'';
+    position:absolute; top:0; left:-2px;
+    width:5px; height:5px; border-radius:50%;
+    background:var(--red);
+    box-shadow:0 0 6px var(--red);
+  }
 
   /* Task rows */
   .gantt-body {
@@ -689,7 +703,7 @@
     <div class="right-bot">
       <div class="gantt-panel">
         <div class="gantt-head">
-          <div class="gantt-title">📋 Kế Hoạch Hành Động</div>
+          <div class="gantt-title">📋 Kế Hoạch</div>
           <div class="gantt-legend">
             <div class="gl"><div class="gl-dot" style="background:#0E9E87"></div><div class="gl-txt">Hoàn thành</div></div>
             <div class="gl"><div class="gl-dot" style="background:#2A5ACC"></div><div class="gl-txt">Đang thực hiện</div></div>
@@ -1121,17 +1135,28 @@ function buildRuler() {
   });
 }
 
+/* Tính % tiến độ tự động theo thời gian thực */
+function calcTimeProgress(startStr, endStr) {
+  const today = vnNow();
+  today.setHours(0,0,0,0);
+  const s = new Date(startStr), e = new Date(endStr);
+  if (today <= s) return 0;
+  if (today >= e) return 100;
+  return Math.round((today - s) / (e - s) * 100);
+}
+
 function buildGanttRows(tasks) {
   const body = document.getElementById('gantt-body');
   body.innerHTML = '';
 
-  // Today line — spans all rows (positioned relative to body)
-  const todayPct = dateToX(vnNow().toISOString().slice(0,10));
-  if (todayPct >= 0 && todayPct <= 100) {
+  // Today line — đúng vị trí trong track (sau label 170px)
+  const todayStr = vnNow().toISOString().slice(0,10);
+  const todayPct = dateToX(todayStr);
+  if (todayPct > 0 && todayPct < 100) {
     const todayLine = document.createElement('div');
     todayLine.className = 'gantt-today-line';
-    todayLine.style.left = `calc(170px + ${todayPct}% * (100% - 170px) / 100)`;
-    todayLine.title = 'Hôm nay';
+    // CSS: 170px (label) + todayPct% của phần track còn lại
+    todayLine.style.left = `calc(170px + (100% - 170px) * ${(todayPct / 100).toFixed(4)})`;
     body.appendChild(todayLine);
   }
 
@@ -1142,12 +1167,17 @@ function buildGanttRows(tasks) {
     const row = document.createElement('div');
     row.className = 'gantt-row';
 
+    // % tiến độ: lấy max giữa thủ công và tự động theo thời gian
+    const timePct  = calcTimeProgress(task.start, task.end);
+    const manualPct = task.progress || 0;
+    const displayPct = Math.max(manualPct, timePct);
+
     // Label
     const label = document.createElement('div');
     label.className = 'gantt-task-label';
     label.innerHTML = `
       <div class="gt-name"><span class="${prioClass(task.priority)}">${task.priority}</span>${task.title}</div>
-      <div class="gt-sub">${task.assignee || '—'} · ${task.status}</div>
+      <div class="gt-sub">${task.assignee || '—'} · ${displayPct}%</div>
     `;
     row.appendChild(label);
 
@@ -1168,8 +1198,8 @@ function buildGanttRows(tasks) {
     });
 
     // Bar
-    const startX = dateToX(task.start);
-    const endX   = dateToX(task.end);
+    const startX   = dateToX(task.start);
+    const endX     = dateToX(task.end);
     const widthPct = Math.max(endX - startX, 0.5);
 
     const bar = document.createElement('div');
@@ -1177,20 +1207,24 @@ function buildGanttRows(tasks) {
     bar.style.left  = startX + '%';
     bar.style.width = widthPct + '%';
 
-    // Progress fill
+    // Progress fill (tự động theo thời gian)
     const fill = document.createElement('div');
     fill.className = 'gantt-bar-fill';
-    fill.style.width = (task.progress || 0) + '%';
+    fill.style.width = displayPct + '%';
     bar.appendChild(fill);
 
     // Bar label
     const blabel = document.createElement('div');
     blabel.className = 'gantt-bar-label';
-    blabel.textContent = `${task.progress}%`;
+    blabel.textContent = `${displayPct}%`;
     bar.appendChild(blabel);
 
     // Tooltip events
     bar.addEventListener('mouseenter', (e) => {
+      const autoNote = timePct !== manualPct
+        ? `<div class="tt-row"><span class="tt-key">⏱ Theo TG:</span> ${timePct}%</div>
+           <div class="tt-row"><span class="tt-key">✏ Thủ công:</span> ${manualPct}%</div>`
+        : '';
       tt.innerHTML = `
         <div class="tt-title">${task.title}</div>
         <div class="tt-row"><span class="tt-key">Trạng thái:</span> ${task.status}</div>
@@ -1198,7 +1232,8 @@ function buildGanttRows(tasks) {
         <div class="tt-row"><span class="tt-key">Phụ trách:</span> ${task.assignee||'—'}</div>
         <div class="tt-row"><span class="tt-key">Bắt đầu:</span> ${task.start}</div>
         <div class="tt-row"><span class="tt-key">Hết hạn:</span> ${task.end}</div>
-        <div class="tt-row"><span class="tt-key">Tiến độ:</span> ${task.progress}%</div>
+        <div class="tt-row"><span class="tt-key">Tiến độ:</span> <b>${displayPct}%</b></div>
+        ${autoNote}
         ${task.result ? `<div class="tt-row"><span class="tt-key">KQ:</span> ${task.result}</div>` : ''}
       `;
       tt.classList.add('show');
