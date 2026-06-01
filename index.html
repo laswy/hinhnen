@@ -755,20 +755,13 @@
     .dc-lunar { font-size: 7px; }
     .dc-note-tip { max-width: 120px; font-size: 8px; }
 
-    /* ── Right: full-width, vertical stack ── */
+    /* ── Stage & halves: thứ tự được sắp xếp bởi JS applyMobileLayout() ── */
+    .stage      { flex-direction: column !important; }
+    .left-half  { width: 100% !important; }
     .right-half { width: 100% !important; flex-direction: column !important; gap: 10px !important; }
-
-    /* ── Right-top: reorder — datetime → weather → crypto ── */
-    .right-top {
-      flex: none !important;
-      flex-direction: column !important;
-      gap: 10px !important;
-    }
-
-    /* Datetime first on mobile */
-    .col-datetime { order: -2; width: 100%; }
-    .col-weather  { order: -1; width: 100%; }
-    .col-crypto   { order:  0; width: 100%; }
+    .right-top  { flex: none !important; flex-direction: column !important; gap: 10px !important; }
+    .right-bot  { flex: none !important; height: auto !important; }
+    .col-datetime, .col-weather, .col-crypto { width: 100%; }
 
     /* ── DateTime: compact ── */
     .col-datetime { align-items: flex-start; padding: 0; }
@@ -1861,8 +1854,51 @@ document.getElementById('dp-close').addEventListener('click', () => {
 });
 
 /* ════════════════════════════
+   MOBILE LAYOUT REORDER
+════════════════════════════ */
+function applyMobileLayout() {
+  if (window.innerWidth > 768) return;
+  const stage = document.querySelector('.stage');
+  if (!stage || stage.dataset.mobileReordered) return;
+  stage.dataset.mobileReordered = '1';
+
+  const leftHalf  = document.querySelector('.left-half');   // lịch
+  const rightTop  = document.querySelector('.right-top');   // datetime+weather+crypto
+  const rightBot  = document.querySelector('.right-bot');   // gantt
+  const rightHalf = document.querySelector('.right-half');
+  const vsep      = document.querySelector('.vsep-main');
+
+  const colDatetime = document.querySelector('.col-datetime');
+  const vsepDt      = colDatetime ? colDatetime.previousElementSibling : null; // vsep-right trước datetime
+  const colWeather  = document.querySelector('.col-weather');
+  const colCrypto   = document.querySelector('.col-crypto');
+
+  // Ẩn các vsep không cần thiết
+  document.querySelectorAll('.vsep-right').forEach(el => el.style.display = 'none');
+  if (vsep) vsep.style.display = 'none';
+
+  // Xây dựng thứ tự mới trong stage:
+  // 1. col-datetime, 2. col-weather, 3. left-half (lịch), 4. right-bot (gantt), 5. col-crypto
+
+  // Di chuyển datetime và weather ra khỏi right-top, đưa thẳng vào stage
+  stage.insertBefore(colDatetime, stage.firstChild);
+  stage.insertBefore(colWeather, leftHalf);
+
+  // leftHalf (lịch) đã ở đúng chỗ (thứ 3 trong stage)
+
+  // Di chuyển right-bot (gantt) ra khỏi right-half vào stage, sau lịch
+  stage.insertBefore(rightBot, rightHalf);
+
+  // right-half giờ chỉ còn right-top với col-crypto → di chuyển crypto ra stage, xóa right-half
+  stage.insertBefore(colCrypto, rightHalf);
+  rightHalf.remove();
+  if (rightTop.children.length === 0) rightTop.remove();
+}
+
+/* ════════════════════════════
    INIT
 ════════════════════════════ */
+applyMobileLayout();
 loadCalendarData();
 fetchWeather();
 fetchCrypto();
