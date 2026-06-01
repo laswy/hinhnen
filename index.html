@@ -2,7 +2,7 @@
 <html lang="vi" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1366,height=768">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>VN–JP Wallpaper 1366×768</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;700&family=Rajdhani:wght@300;600;700&family=Share+Tech+Mono&display=swap');
@@ -713,6 +713,108 @@
   .bot-txt { font-size:8px; letter-spacing:2.5px; color:var(--dim); text-transform:uppercase; }
 
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ══════════════════════════════════════
+     MOBILE — max-width: 768px
+  ══════════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* ── Reset fixed desktop viewport ── */
+    html, body {
+      width: 100% !important;
+      height: auto !important;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ── Hide desktop-only decoration ── */
+    #nebula, #gears, .grid, .vignette,
+    .aline, .cm, .vsep-main, .vsep-right,
+    .bot, .cal-wrap.next { display: none !important; }
+
+    /* ── Theme button ── */
+    #theme-btn { top: 10px; right: 10px; width: 34px; height: 34px; font-size: 15px; }
+
+    /* ── Stage: vertical stack ── */
+    .stage {
+      position: relative !important;
+      flex-direction: column !important;
+      padding: 52px 10px 24px !important;
+      gap: 10px !important;
+    }
+
+    /* ── Left: full-width calendar ── */
+    .left-half { width: 100% !important; }
+
+    .cal-panel { padding: 10px 10px 8px; }
+    .cal-month-big { font-size: 20px; }
+    .cal-grid { gap: 3px; }
+    .dc { min-height: 40px; }
+    .dc-num { font-size: 14px; }
+    .dc-lunar { font-size: 7px; }
+    .dc-note-tip { max-width: 120px; font-size: 8px; }
+
+    /* ── Right: full-width, vertical stack ── */
+    .right-half { width: 100% !important; flex-direction: column !important; gap: 10px !important; }
+
+    /* ── Right-top: reorder — datetime → weather → crypto ── */
+    .right-top {
+      flex: none !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+
+    /* Datetime first on mobile */
+    .col-datetime { order: -2; width: 100%; }
+    .col-weather  { order: -1; width: 100%; }
+    .col-crypto   { order:  0; width: 100%; }
+
+    /* ── DateTime: compact ── */
+    .col-datetime { align-items: flex-start; padding: 0; }
+    .date-block { text-align: left; }
+    .day-name { font-size: 38px; }
+    .date-num { font-size: 13px; letter-spacing: 2px; }
+    .month-jp-s { font-size: 10px; }
+    .mid-rule { width: 100%; }
+    .clocks-block { gap: 28px; }
+    .clock-digits { font-size: 30px; }
+    .clock-digits .sec { font-size: 15px; }
+
+    /* ── Weather: horizontal row layout ── */
+    .w-panel { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; }
+    .w-sec-lbl { display: none; }
+    .w-main-row { gap: 8px; }
+    .w-temp { font-size: 38px; }
+    .w-unit { font-size: 16px; }
+    .w-rule { width: 100%; order: 10; }
+    .w-meta { order: 11; width: 100%; }
+    .w-upd  { order: 12; width: 100%; }
+
+    /* ── Crypto: keep as-is, just full width ── */
+    .crypto-panel { padding: 10px 10px 8px; }
+    .crypto-tab { font-size: 8px; }
+    .crypto-sym { font-size: 11px; }
+    .crypto-price { font-size: 11px; }
+
+    /* ── Gantt: horizontal scroll ── */
+    .right-bot { flex: none !important; height: auto !important; }
+    .gantt-panel { overflow: visible; padding: 10px 10px 8px; }
+    .gantt-body-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .gantt-ruler, .gantt-body { min-width: 480px; }
+
+    /* ── Day popup: full screen ── */
+    .day-popup-backdrop { align-items: flex-end; }
+    .day-popup {
+      min-width: unset;
+      max-width: 100% !important;
+      width: 100% !important;
+      border-radius: 12px 12px 0 0;
+    }
+    .dp-header { padding: 14px 16px 10px; }
+    .dp-date { font-size: 17px; }
+    .dp-body { padding: 12px 16px 24px; }
+  }
 </style>
 </head>
 <body>
@@ -898,8 +1000,10 @@
           </div>
         </div>
         <div class="gantt-rule"></div>
-        <div class="gantt-ruler" id="gantt-ruler"></div>
-        <div class="gantt-body"  id="gantt-body"></div>
+        <div class="gantt-body-scroll">
+          <div class="gantt-ruler" id="gantt-ruler"></div>
+          <div class="gantt-body"  id="gantt-body"></div>
+        </div>
       </div>
     </div>
 
