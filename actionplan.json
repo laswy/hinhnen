@@ -1,0 +1,67 @@
+[
+  {
+    "id": "mpqqdbv8h223o",
+    "title": "BÁO GIÁ ISO 27001 & ISO 45001",
+    "category": "Other",
+    "priority": "B",
+    "status": "Hoàn thành",
+    "assignee": "ANH",
+    "start": "2026-05-15",
+    "end": "2026-05-31",
+    "progress": 100,
+    "notes": "Xin báo giá 6-7 bên đánh giá nổi tiếng rồi so sánh về giá và thời gian",
+    "result": "Đã gửi báo giá cho sếp ngày 29/5/2026 16:29"
+  },
+  {
+    "id": "mpf08yjs572w9",
+    "title": "ĐÀO TẠO ĐÁNH GIÁ VIÊN NỘI BỘ",
+    "category": "Other",
+    "priority": "C",
+    "status": "Hoàn thành",
+    "assignee": "",
+    "start": "2026-04-09",
+    "end": "2026-04-11",
+    "progress": 100,
+    "notes": "",
+    "result": ""
+  },
+  {
+    "id": "mpf05ocxhz2l5",
+    "title": "ĐÀO TẠO 6 CORE TOOL",
+    "category": "Other",
+    "priority": "B",
+    "status": "Đang thực hiện",
+    "assignee": "",
+    "start": "2026-08-17",
+    "end": "2026-08-22",
+    "progress": 0,
+    "notes": "",
+    "result": ""
+  },
+  {
+    "id": "mpf04hvre8a20",
+    "title": "ĐÀO TẠO ISO 14001:2026",
+    "category": "Other",
+    "priority": "B",
+    "status": "Đang thực hiện",
+    "assignee": "",
+    "start": "2026-08-06",
+    "end": "2026-08-08",
+    "progress": 0,
+    "notes": "",
+    "result": ""
+  },
+  {
+    "id": "mpf02czaewwb8",
+    "title": "ĐÁNH GIÁ IATF 16949:2016",
+    "category": "Other",
+    "priority": "A",
+    "status": "Đang thực hiện",
+    "assignee": "",
+    "start": "2026-10-05",
+    "end": "2026-10-09",
+    "progress": 0,
+    "notes": "",
+    "result": ""
+  }
+]
