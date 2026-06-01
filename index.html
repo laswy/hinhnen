@@ -1255,8 +1255,14 @@ function renderGrid(gridId, year, month, todayDate){
     let marksHtml = '';
     if(dayTasks.length || dayNotes.length){
       const dots = [
-        ...dayTasks.filter(x=>x.role==='start').map(()=>'<span class="dcm dcm-s"></span>'),
-        ...dayTasks.filter(x=>x.role==='end').map(()=>'<span class="dcm dcm-e"></span>'),
+        ...dayTasks.filter(x=>x.role==='start').map(({task:t})=>{
+          const tip = (t.title.length>55 ? t.title.slice(0,52)+'…' : t.title);
+          return `<span class="dcm dcm-s"><span class="dc-note-tip" style="border-color:rgba(100,200,180,0.4)">▶ ${tip}</span></span>`;
+        }),
+        ...dayTasks.filter(x=>x.role==='end').map(({task:t})=>{
+          const tip = (t.title.length>55 ? t.title.slice(0,52)+'…' : t.title);
+          return `<span class="dcm dcm-e"><span class="dc-note-tip" style="border-color:rgba(255,144,80,0.4)">■ ${tip}</span></span>`;
+        }),
         ...dayNotes.map(n=>{
           const tipText = n.text.length > 60 ? n.text.slice(0,57)+'…' : n.text;
           return `<span class="dcm dcm-n"><span class="dc-note-tip">📝 ${tipText}</span></span>`;
