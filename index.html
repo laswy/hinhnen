@@ -763,26 +763,31 @@
     .right-bot  { flex: none !important; height: auto !important; }
     .col-datetime, .col-weather, .col-crypto { width: 100%; }
 
-    /* ── DateTime: compact ── */
-    .col-datetime { align-items: flex-start; padding: 0; }
-    .date-block { text-align: left; }
+    /* ── DateTime: căn giữa ── */
+    .col-datetime { align-items: center; padding: 0; }
+    .date-block { text-align: center; }
     .day-name { font-size: 38px; }
     .date-num { font-size: 13px; letter-spacing: 2px; }
     .month-jp-s { font-size: 10px; }
-    .mid-rule { width: 100%; }
-    .clocks-block { gap: 28px; }
+    .mid-rule { width: 80%; }
+    .clocks-block { gap: 28px; justify-content: center; }
     .clock-digits { font-size: 30px; }
     .clock-digits .sec { font-size: 15px; }
 
-    /* ── Weather: horizontal row layout ── */
-    .w-panel { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; }
+    /* ── Weather: căn giữa ── */
+    .w-panel {
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; gap: 6px; padding: 12px 14px;
+    }
     .w-sec-lbl { display: none; }
-    .w-main-row { gap: 8px; }
-    .w-temp { font-size: 38px; }
-    .w-unit { font-size: 16px; }
-    .w-rule { width: 100%; order: 10; }
-    .w-meta { order: 11; width: 100%; }
-    .w-upd  { order: 12; width: 100%; }
+    .w-loc { text-align: center; }
+    .w-main-row { justify-content: center; gap: 10px; }
+    .w-temp { font-size: 44px; }
+    .w-unit { font-size: 18px; }
+    .w-desc { text-align: center; }
+    .w-rule { width: 80%; }
+    .w-meta { justify-content: center; gap: 20px; }
+    .w-upd  { text-align: center; }
 
     /* ── Crypto: keep as-is, just full width ── */
     .crypto-panel { padding: 10px 10px 8px; }
