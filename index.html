@@ -368,15 +368,16 @@
   }
   .crypto-row:last-child { border-bottom:none; }
 
-  .crypto-rank { font-size:7px; color:var(--dim); opacity:.5; width:12px; text-align:right; margin-right:5px; flex-shrink:0; }
-  .crypto-left  { display:flex; align-items:center; gap:5px; }
-  .crypto-icon  { width:16px; height:16px; border-radius:50%; flex-shrink:0; object-fit:cover; }
+  .crypto-rank { font-size:7px; color:var(--dim); opacity:.5; width:14px; text-align:center; flex-shrink:0; }
+  .crypto-left  { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
+  .crypto-icon-wrap { width:18px; height:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .crypto-icon  { width:16px; height:16px; border-radius:50%; object-fit:cover; display:block; }
   .crypto-sym   {
     font-family:'Rajdhani',sans-serif; font-weight:700;
     font-size:10px; color:var(--white); letter-spacing:1px;
-    transition:color .4s; min-width:32px;
+    transition:color .4s; min-width:34px;
   }
-  .crypto-name  { font-size:6.5px; color:var(--mist); opacity:.4; letter-spacing:.4px; max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .crypto-name  { font-size:6.5px; color:var(--mist); opacity:.4; letter-spacing:.4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .crypto-right { text-align:right; }
   .crypto-price {
@@ -1404,7 +1405,7 @@ function renderCryptoRows(coins) {
     row.innerHTML = `
       <span class="crypto-rank">${i+1}</span>
       <div class="crypto-left">
-        <img class="crypto-icon" src="${coin.img}" alt="${coin.sym}" loading="lazy">
+        <div class="crypto-icon-wrap"><img class="crypto-icon" src="${coin.img}" alt="${coin.sym}" loading="lazy"></div>
         <div>
           <div class="crypto-sym">${coin.sym}</div>
           <div class="crypto-name">${coin.name}</div>
