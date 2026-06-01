@@ -181,6 +181,19 @@
 
   .cal-right { text-align:right; }
   .cal-year { font-size:9px; color:var(--mist); letter-spacing:2px; opacity:.4; }
+
+  /* ── Calendar nav arrows ── */
+  .cal-nav { display:flex; align-items:center; gap:4px; }
+  .cal-nav-btn {
+    background:none; border:1px solid var(--panelb); border-radius:3px;
+    color:var(--mist); font-size:10px; width:20px; height:20px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:.55; transition:opacity .15s, border-color .15s;
+    padding:0; line-height:1;
+  }
+  .cal-nav-btn:hover { opacity:1; border-color:var(--sep-c); color:var(--white); }
+  .cal-head-left { display:flex; align-items:flex-start; gap:8px; }
+  .cal-head-nav  { display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:2px; }
   .cal-wd-row { display:flex; align-items:center; gap:4px; justify-content:flex-end; margin-top:2px; }
   .cal-wd-num {
     font-family:'Rajdhani',sans-serif; font-weight:700;
@@ -836,9 +849,15 @@
     <div class="cal-wrap">
       <div class="cal-panel">
         <div class="cal-head">
-          <div>
-            <div class="cal-month-big" id="cal-mname">---</div>
-            <div class="cal-month-jp"  id="cal-mjp">--月</div>
+          <div class="cal-head-left">
+            <div>
+              <div class="cal-month-big" id="cal-mname">---</div>
+              <div class="cal-month-jp"  id="cal-mjp">--月</div>
+            </div>
+            <div class="cal-head-nav cal-nav">
+              <button class="cal-nav-btn" id="cal-prev">◀</button>
+              <button class="cal-nav-btn" id="cal-next">▶</button>
+            </div>
           </div>
           <div class="cal-right">
             <div class="cal-year" id="cal-year">----</div>
@@ -868,9 +887,15 @@
     <div class="cal-wrap next">
       <div class="cal-panel" style="border-color:rgba(168,188,216,0.04)">
         <div class="cal-head">
-          <div>
-            <div class="cal-month-big" id="cal-mname-nxt" style="font-size:18px;opacity:.7">---</div>
-            <div class="cal-month-jp"  id="cal-mjp-nxt">--月</div>
+          <div class="cal-head-left">
+            <div>
+              <div class="cal-month-big" id="cal-mname-nxt" style="font-size:18px;opacity:.7">---</div>
+              <div class="cal-month-jp"  id="cal-mjp-nxt">--月</div>
+            </div>
+            <div class="cal-head-nav cal-nav">
+              <button class="cal-nav-btn" id="cal-nxt-prev">◀</button>
+              <button class="cal-nav-btn" id="cal-nxt-next">▶</button>
+            </div>
           </div>
           <div class="cal-right">
             <div class="cal-year" id="cal-year-nxt">----</div>
@@ -1401,24 +1426,44 @@ function renderGrid(gridId, year, month, todayDate){
   }
 }
 
-function buildCalendars(){
-  const vn=vnNow();
-  const curY=vn.getFullYear(), curM=vn.getMonth()+1, today=vn.getDate();
-  let nxtM=curM+1, nxtY=curY;
-  if(nxtM>12){nxtM=1;nxtY++;}
+// State: tháng đang hiển thị trên mỗi lịch
+const vn0 = vnNow();
+let CAL_STATE = {
+  cur: { y: vn0.getFullYear(), m: vn0.getMonth()+1 },
+  nxt: { y: vn0.getFullYear(), m: vn0.getMonth()+2 > 12 ? 1 : vn0.getMonth()+2 }
+};
+if(vn0.getMonth()+2 > 12) CAL_STATE.nxt.y = vn0.getFullYear()+1;
 
-  document.getElementById('cal-mname').textContent=VI_MONTHS[curM-1];
-  document.getElementById('cal-mjp').textContent=JP_MONTHS[curM-1];
-  document.getElementById('cal-year').textContent=curY;
-  document.getElementById('cal-wd').textContent=calcWorkdays(curY,curM);
-  renderGrid('cal-grid-cur', curY, curM, today);
-
-  document.getElementById('cal-mname-nxt').textContent=VI_MONTHS[nxtM-1];
-  document.getElementById('cal-mjp-nxt').textContent=JP_MONTHS[nxtM-1];
-  document.getElementById('cal-year-nxt').textContent=nxtY;
-  document.getElementById('cal-wd-nxt').textContent=calcWorkdays(nxtY,nxtM);
-  renderGrid('cal-grid-nxt', nxtY, nxtM, null);
+function renderCalendar(slot) {
+  const {y,m} = CAL_STATE[slot];
+  const vn = vnNow();
+  const todayMark = (y===vn.getFullYear() && m===vn.getMonth()+1) ? vn.getDate() : null;
+  const isCur = slot==='cur';
+  document.getElementById(isCur?'cal-mname':'cal-mname-nxt').textContent = VI_MONTHS[m-1];
+  document.getElementById(isCur?'cal-mjp':'cal-mjp-nxt').textContent     = JP_MONTHS[m-1];
+  document.getElementById(isCur?'cal-year':'cal-year-nxt').textContent    = y;
+  document.getElementById(isCur?'cal-wd':'cal-wd-nxt').textContent        = calcWorkdays(y,m);
+  renderGrid(isCur?'cal-grid-cur':'cal-grid-nxt', y, m, todayMark);
 }
+
+function navCal(slot, delta) {
+  let {y,m} = CAL_STATE[slot];
+  m += delta;
+  if(m>12){m=1;y++;} else if(m<1){m=12;y--;}
+  CAL_STATE[slot] = {y,m};
+  renderCalendar(slot);
+}
+
+function buildCalendars(){
+  renderCalendar('cur');
+  renderCalendar('nxt');
+}
+
+// Nav button listeners
+document.getElementById('cal-prev').addEventListener('click',()=>navCal('cur',-1));
+document.getElementById('cal-next').addEventListener('click',()=>navCal('cur',+1));
+document.getElementById('cal-nxt-prev').addEventListener('click',()=>navCal('nxt',-1));
+document.getElementById('cal-nxt-next').addEventListener('click',()=>navCal('nxt',+1));
 
 /* ════════════════════════════
    CLOCK + DATE
