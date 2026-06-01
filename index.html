@@ -650,7 +650,6 @@
   .day-popup-backdrop.show { display:flex; }
 
   .day-popup {
-    background: [data-theme="dark"] var(--tooltip-bg);
     background:var(--tooltip-bg);
     border:1px solid var(--tooltip-b);
     border-radius:8px; padding:0;
@@ -749,82 +748,62 @@
     /* ── Theme button ── */
     #theme-btn { top: 10px; right: 10px; width: 34px; height: 34px; font-size: 15px; }
 
-    /* ── Stage: vertical stack ── */
-    .stage {
-      position: relative !important;
-      flex-direction: column !important;
-      padding: 52px 10px 24px !important;
-      gap: 10px !important;
-    }
+    /* Stage: thứ tự DOM do JS applyMobileLayout() xử lý */
+    .stage    { position:relative !important; flex-direction:column !important; padding:52px 10px 24px !important; gap:10px !important; }
+    .left-half  { width:100% !important; }
+    .right-half { width:100% !important; flex-direction:column !important; gap:10px !important; }
+    .right-top  { flex:none !important; flex-direction:column !important; gap:10px !important; }
+    .right-bot  { flex:none !important; height:auto !important; }
+    .col-datetime, .col-weather, .col-crypto { width:100%; }
 
-    /* ── Left: full-width calendar ── */
-    .left-half { width: 100% !important; }
+    /* Calendar */
+    .cal-panel { padding:10px 10px 8px; }
+    .cal-month-big { font-size:20px; }
+    .cal-grid { gap:3px; }
+    .dc { min-height:40px; }
+    .dc-num { font-size:14px; }
+    .dc-lunar { font-size:7px; }
+    .dc-note-tip { max-width:120px; font-size:8px; }
 
-    .cal-panel { padding: 10px 10px 8px; }
-    .cal-month-big { font-size: 20px; }
-    .cal-grid { gap: 3px; }
-    .dc { min-height: 40px; }
-    .dc-num { font-size: 14px; }
-    .dc-lunar { font-size: 7px; }
-    .dc-note-tip { max-width: 120px; font-size: 8px; }
+    /* DateTime */
+    .col-datetime { align-items:center; padding:0; }
+    .date-block { text-align:center; }
+    .day-name { font-size:38px; }
+    .date-num { font-size:13px; letter-spacing:2px; }
+    .month-jp-s { font-size:10px; }
+    .mid-rule { width:80%; }
+    .clocks-block { gap:28px; justify-content:center; }
+    .clock-digits { font-size:30px; }
+    .clock-digits .sec { font-size:15px; }
 
-    /* ── Stage & halves: thứ tự được sắp xếp bởi JS applyMobileLayout() ── */
-    .stage      { flex-direction: column !important; }
-    .left-half  { width: 100% !important; }
-    .right-half { width: 100% !important; flex-direction: column !important; gap: 10px !important; }
-    .right-top  { flex: none !important; flex-direction: column !important; gap: 10px !important; }
-    .right-bot  { flex: none !important; height: auto !important; }
-    .col-datetime, .col-weather, .col-crypto { width: 100%; }
+    /* Weather */
+    .w-panel { flex-direction:column; align-items:center; text-align:center; gap:6px; padding:12px 14px; }
+    .w-sec-lbl { display:none; }
+    .w-loc { text-align:center; }
+    .w-main-row { justify-content:center; gap:10px; }
+    .w-temp { font-size:44px; }
+    .w-unit { font-size:18px; }
+    .w-desc, .w-upd { text-align:center; }
+    .w-rule { width:80%; }
+    .w-meta { justify-content:center; gap:20px; }
 
-    /* ── DateTime: căn giữa ── */
-    .col-datetime { align-items: center; padding: 0; }
-    .date-block { text-align: center; }
-    .day-name { font-size: 38px; }
-    .date-num { font-size: 13px; letter-spacing: 2px; }
-    .month-jp-s { font-size: 10px; }
-    .mid-rule { width: 80%; }
-    .clocks-block { gap: 28px; justify-content: center; }
-    .clock-digits { font-size: 30px; }
-    .clock-digits .sec { font-size: 15px; }
+    /* Crypto */
+    .crypto-panel { padding:10px 10px 8px; }
+    .crypto-tab { font-size:8px; }
+    .crypto-sym { font-size:11px; }
+    .crypto-price { font-size:11px; }
 
-    /* ── Weather: căn giữa ── */
-    .w-panel {
-      flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; gap: 6px; padding: 12px 14px;
-    }
-    .w-sec-lbl { display: none; }
-    .w-loc { text-align: center; }
-    .w-main-row { justify-content: center; gap: 10px; }
-    .w-temp { font-size: 44px; }
-    .w-unit { font-size: 18px; }
-    .w-desc { text-align: center; }
-    .w-rule { width: 80%; }
-    .w-meta { justify-content: center; gap: 20px; }
-    .w-upd  { text-align: center; }
+    /* Gantt */
+    .gantt-panel { overflow:visible; padding:10px 10px 8px; }
+    .gantt-body-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .gantt-ruler, .gantt-body { min-width:480px; }
 
-    /* ── Crypto: keep as-is, just full width ── */
-    .crypto-panel { padding: 10px 10px 8px; }
-    .crypto-tab { font-size: 8px; }
-    .crypto-sym { font-size: 11px; }
-    .crypto-price { font-size: 11px; }
-
-    /* ── Gantt: horizontal scroll ── */
-    .right-bot { flex: none !important; height: auto !important; }
-    .gantt-panel { overflow: visible; padding: 10px 10px 8px; }
-    .gantt-body-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .gantt-ruler, .gantt-body { min-width: 480px; }
-
-    /* ── Day popup: full screen ── */
-    .day-popup-backdrop { align-items: flex-end; }
-    .day-popup {
-      min-width: unset;
-      max-width: 100% !important;
-      width: 100% !important;
-      border-radius: 12px 12px 0 0;
-    }
-    .dp-header { padding: 14px 16px 10px; }
-    .dp-date { font-size: 17px; }
-    .dp-body { padding: 12px 16px 24px; }
+    /* Day popup — bottom sheet */
+    .day-popup-backdrop { align-items:flex-end; }
+    .day-popup { min-width:unset; max-width:100% !important; width:100% !important; border-radius:12px 12px 0 0; }
+    .dp-header { padding:14px 16px 10px; }
+    .dp-date { font-size:17px; }
+    .dp-body { padding:12px 16px 24px; }
   }
 </style>
 </head>
@@ -1412,7 +1391,7 @@ function renderGrid(gridId, year, month, todayDate){
 
     // Click → popup
     if(!cls.includes('empty')){
-      c.addEventListener('click', () => showDayPopup(dateStr, dayTasks, dayNotes, lr));
+      c.addEventListener('click', () => showDayPopup(dateStr, dayTasks, dayNotes));
     }
 
     grid.appendChild(c);
@@ -1843,54 +1822,45 @@ async function loadCalendarData() {
   buildCalendars();
 }
 
-function showDayPopup(dateStr, dayTasks, dayNotes, lr) {
-  // Parse date for display
+function showDayPopup(dateStr, dayTasks, dayNotes) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const solar = new Date(y, m-1, d);
-  const lunar  = convertSolar2Lunar(d, m, y, 7);
+  const lunar  = solar2Lunar(d, m, y);
 
   document.getElementById('dp-date').textContent =
     `${pad(d)}/${pad(m)}/${y} — ${VI_DAYS[solar.getDay()]}`;
   document.getElementById('dp-lunar').textContent =
-    `Âm: ${lunar[0]}/${lunar[1]}/${lunar[2]}`;
+    `Âm: ${lunar.d}/${lunar.m}/${lunar.y}`;
 
-  // Tasks section
   const tasksEl = document.getElementById('dp-tasks');
-  const tasksWrap = document.getElementById('dp-tasks-wrap');
-  if (dayTasks.length === 0) {
-    tasksEl.innerHTML = '<div class="dp-empty">Không có kế hoạch</div>';
-  } else {
-    tasksEl.innerHTML = dayTasks.map(({task: t, role}) => {
-      const badge = role === 'start'
-        ? '<span class="dp-task-badge dp-badge-s">BẮT ĐẦU</span>'
-        : '<span class="dp-task-badge dp-badge-e">KẾT THÚC</span>';
-      const prioClass = `dp-prio-${t.priority || 'B'}`;
-      return `<div class="dp-task-item">
-        ${badge}
-        <div class="dp-task-info">
-          <div class="dp-task-name">${t.title}</div>
-          <div class="dp-task-sub">
-            <span class="dp-prio ${prioClass}">${t.priority || 'B'}</span>
-            ${t.assignee ? t.assignee + '  · ' : ''}${t.progress}%  ·  ${t.status}
+  tasksEl.innerHTML = dayTasks.length === 0
+    ? '<div class="dp-empty">Không có kế hoạch</div>'
+    : dayTasks.map(({task: t, role}) => {
+        const badge = role === 'start'
+          ? '<span class="dp-task-badge dp-badge-s">BẮT ĐẦU</span>'
+          : '<span class="dp-task-badge dp-badge-e">KẾT THÚC</span>';
+        const prioClass = `dp-prio-${t.priority || 'B'}`;
+        return `<div class="dp-task-item">
+          ${badge}
+          <div class="dp-task-info">
+            <div class="dp-task-name">${t.title}</div>
+            <div class="dp-task-sub">
+              <span class="dp-prio ${prioClass}">${t.priority || 'B'}</span>
+              ${t.assignee ? t.assignee + ' · ' : ''}${t.progress}% · ${t.status}
+            </div>
           </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+        </div>`;
+      }).join('');
 
-  // Notes section
   const notesEl = document.getElementById('dp-notes');
-  const notesWrap = document.getElementById('dp-notes-wrap');
-  if (dayNotes.length === 0) {
-    notesEl.innerHTML = '<div class="dp-empty">Không có ghi chú</div>';
-  } else {
-    notesEl.innerHTML = dayNotes.map(n =>
-      `<div class="dp-note-item">
-        <span class="dp-note-icon">📝</span>
-        <div class="dp-note-text">${n.text}</div>
-      </div>`
-    ).join('');
-  }
+  notesEl.innerHTML = dayNotes.length === 0
+    ? '<div class="dp-empty">Không có ghi chú</div>'
+    : dayNotes.map(n =>
+        `<div class="dp-note-item">
+          <span class="dp-note-icon">📝</span>
+          <div class="dp-note-text">${n.text}</div>
+        </div>`
+      ).join('');
 
   document.getElementById('day-backdrop').classList.add('show');
 }
