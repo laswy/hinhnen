@@ -45,7 +45,10 @@ def load_notes():
     if not os.path.exists(NOTES_FILE):
         return []
     with open(NOTES_FILE, encoding='utf-8') as f:
-        return json.load(f)
+        content = f.read().strip()
+    if not content:
+        return []
+    return json.loads(content)
 
 def save_notes(notes):
     with open(NOTES_FILE, 'w', encoding='utf-8') as f:
