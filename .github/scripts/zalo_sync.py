@@ -26,8 +26,10 @@ def get_update(offset=None):
     if offset is not None:
         data['offset'] = str(offset)
     try:
-        r = requests.post(f'{BASE_URL}/getUpdates', data=data, headers=HEADERS, timeout=20)
+        r = requests.post(f'{BASE_URL}/getUpdates', data=data, headers=HEADERS, timeout=35)
+        print(f'Zalo API status: {r.status_code}')
         raw = r.json()
+        print(f'Zalo API response: {json.dumps(raw)[:300]}')
         # error_code 408 = long-polling timeout, không có tin nhắn mới — bình thường
         if not raw.get('ok'):
             if raw.get('error_code') == 408:
