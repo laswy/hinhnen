@@ -12,29 +12,42 @@ OFFSET_FILE  = '.github/zalo_offset.txt'
 DATA_FILE    = 'actionplan.json'
 NOTES_FILE   = 'calendar_notes.json'
 
-BASE_URL = 'https://bot.zaloplatforms.com/v1'
+BASE_URL = f'https://bot-api.zapps.me/bot{BOT_TOKEN}'
 
 # ── Zalo Bot helpers ──────────────────────────────────────────────────
+# API: POST https://bot-api.zapps.me/bot{token}/{endpoint}
+# getUpdates trả về 1 update tại một thời điểm (không phải list)
+# Cần loop tăng offset để lấy hết
 
-def zalo(method, **kwargs):
-    """Gọi Zalo Bot API."""
-    headers = {'access_token': BOT_TOKEN}
-    if kwargs.get('_method', 'GET') == 'POST':
-        kwargs.pop('_method', None)
-        r = requests.post(f'{BASE_URL}/{method}', headers=headers, json=kwargs, timeout=15)
-    else:
-        kwargs.pop('_method', None)
-        r = requests.get(f'{BASE_URL}/{method}', headers=headers, params=kwargs, timeout=15)
+def get_update(offset=None):
+    """Lấy 1 update từ server. Trả về dict hoặc {} nếu không có gì mới."""
+    data = {'timeout': 0}
+    if offset is not None:
+        data['offset'] = offset
+    r = requests.post(f'{BASE_URL}/getUpdates', json=data, timeout=20)
     return r.json()
 
-def get_updates(offset=None):
-    params = {'limit': 50}
-    if offset:
-        params['offset'] = offset
-    return zalo('getUpdates', **params)
+def fetch_all_updates(start_offset):
+    """Loop lấy tất cả updates mới, trả về list các raw dict."""
+    updates = []
+    offset = start_offset
+    while True:
+        result = get_update(offset)
+        if not result or not result.get('message'):
+            break
+        updates.append(result)
+        update_id = result.get('update_id')
+        if update_id is None:
+            break
+        offset = update_id + 1
+    return updates, offset
 
 def send(chat_id, text):
-    zalo('sendMessage', _method='POST', chat_id=str(chat_id), text=text)
+    requests.post(
+        f'{BASE_URL}/sendMessage',
+        json={'chat_id': str(chat_id), 'text': text},
+        timeout=15
+    )
 
 # ── Data helpers ──────────────────────────────────────────────────────
 
@@ -271,13 +284,8 @@ def cmd_ds(tasks):
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    offset  = load_offset()
-    result  = get_updates(offset)
-    updates = result.get('result', [])
-
-    if result.get('error_code') not in (None, 0):
-        print('Zalo Bot API error:', result)
-        sys.exit(1)
+    start_offset  = load_offset()
+    updates, new_off = fetch_all_updates(start_offset)
 
     if not updates:
         print('Khong co tin nhan moi.')
@@ -287,13 +295,11 @@ def main():
     notes         = load_notes()
     changed       = False
     notes_changed = False
-    new_off       = offset
 
-    for upd in updates:
-        new_off  = upd.get('update_id', 0) + 1
-        msg      = upd.get('message', {})
-        chat_id  = str(msg.get('chat', {}).get('id', ''))
-        text     = (msg.get('text') or '').strip()
+    for raw in updates:
+        msg     = raw.get('message', {})
+        chat_id = str(msg.get('chat', {}).get('id', ''))
+        text    = (msg.get('text') or '').strip()
 
         if chat_id != str(ALLOWED_CHAT):
             print(f'Bo qua tin nhan tu chat {chat_id}')
@@ -302,6 +308,7 @@ def main():
             continue
 
         cmd = text.split()[0].lower().split('@')[0]
+        print(f'Xu ly lenh: {cmd} tu chat {chat_id}')
 
         if cmd in ('/them', '/add'):
             new_tasks, reply = cmd_them(text, tasks)
@@ -376,6 +383,7 @@ def main():
         print('Khong co thay doi ghi chu.')
 
     save_offset(new_off)
+    print(f'Offset moi: {new_off}')
 
 if __name__ == '__main__':
     main()
