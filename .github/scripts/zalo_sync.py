@@ -1,71 +1,40 @@
 import json
 import os
-import re
 import sys
 import requests
 import random
 import string
 from datetime import datetime
 
-APP_ID        = os.environ['ZALO_APP_ID']
-APP_SECRET    = os.environ['ZALO_APP_SECRET']
-ALLOWED_USER  = os.environ['ZALO_USER_ID']   # Zalo user_id được phép gửi lệnh
-TOKEN_FILE    = '.github/zalo_refresh_token.txt'
-OFFSET_FILE   = '.github/zalo_offset.txt'
-DATA_FILE     = 'actionplan.json'
-NOTES_FILE    = 'calendar_notes.json'
+BOT_TOKEN    = os.environ['ZALO_BOT_TOKEN']
+ALLOWED_CHAT = os.environ['ZALO_CHAT_ID']   # group_id hoặc user_id được phép dùng lệnh
+OFFSET_FILE  = '.github/zalo_offset.txt'
+DATA_FILE    = 'actionplan.json'
+NOTES_FILE   = 'calendar_notes.json'
 
-# ── Zalo OA helpers ───────────────────────────────────────────────────
+BASE_URL = 'https://bot.zaloplatforms.com/v1'
 
-def refresh_access_token():
-    if not os.path.exists(TOKEN_FILE):
-        print(f'Lỗi: Không tìm thấy {TOKEN_FILE}. Hãy tạo file và điền refresh_token.')
-        sys.exit(1)
-    with open(TOKEN_FILE) as f:
-        refresh_token = f.read().strip()
-    r = requests.post(
-        'https://oauth.zaloapp.com/v4/oa/access_token',
-        headers={'secret_key': APP_SECRET},
-        data={
-            'app_id': APP_ID,
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token,
-        },
-        timeout=15
-    )
-    data = r.json()
-    if 'access_token' not in data:
-        print('Zalo token refresh thất bại:', data)
-        sys.exit(1)
-    # Zalo xoay vòng refresh_token sau mỗi lần dùng — cập nhật lại file
-    new_refresh = data.get('refresh_token', refresh_token)
-    with open(TOKEN_FILE, 'w') as f:
-        f.write(new_refresh)
-    print('Access token đã được làm mới.')
-    return data['access_token']
+# ── Zalo Bot helpers ──────────────────────────────────────────────────
 
-def get_messages(access_token, user_id, count=20):
-    params = {'data': json.dumps({'user_id': user_id, 'offset': 0, 'count': count})}
-    r = requests.get(
-        'https://openapi.zalo.me/v2.0/oa/conversation',
-        headers={'access_token': access_token},
-        params=params,
-        timeout=15
-    )
+def zalo(method, **kwargs):
+    """Gọi Zalo Bot API."""
+    headers = {'access_token': BOT_TOKEN}
+    if kwargs.get('_method', 'GET') == 'POST':
+        kwargs.pop('_method', None)
+        r = requests.post(f'{BASE_URL}/{method}', headers=headers, json=kwargs, timeout=15)
+    else:
+        kwargs.pop('_method', None)
+        r = requests.get(f'{BASE_URL}/{method}', headers=headers, params=kwargs, timeout=15)
     return r.json()
 
-def send(access_token, user_id, text):
-    # Zalo không hỗ trợ HTML — strip thẻ HTML nếu còn sót
-    plain = re.sub(r'<[^>]+>', '', text)
-    requests.post(
-        'https://openapi.zalo.me/v2.0/oa/message/cs',
-        headers={'access_token': access_token},
-        json={
-            'recipient': {'user_id': user_id},
-            'message': {'text': plain},
-        },
-        timeout=15
-    )
+def get_updates(offset=None):
+    params = {'limit': 50}
+    if offset:
+        params['offset'] = offset
+    return zalo('getUpdates', **params)
+
+def send(chat_id, text):
+    zalo('sendMessage', _method='POST', chat_id=str(chat_id), text=text)
 
 # ── Data helpers ──────────────────────────────────────────────────────
 
@@ -94,22 +63,21 @@ def save_notes(notes):
         json.dump(notes, f, ensure_ascii=False, indent=2)
 
 def load_offset():
-    """Trả về Unix timestamp (ms) của tin nhắn cuối cùng đã xử lý."""
     if os.path.exists(OFFSET_FILE):
         t = open(OFFSET_FILE).read().strip()
         if t.isdigit():
             return int(t)
-    return 0
+    return None
 
-def save_offset(ts_ms):
+def save_offset(v):
     os.makedirs(os.path.dirname(OFFSET_FILE), exist_ok=True)
     with open(OFFSET_FILE, 'w') as f:
-        f.write(str(ts_ms))
+        f.write(str(v))
 
 # ── Command parsers ───────────────────────────────────────────────────
 
 HELP_TEXT = """\
-Bot Ke Hoach — Huong dan:
+Bot Ke Hoach - Huong dan:
 
 Them ke hoach:
 /them Ten | Tu ngay | Den ngay | Uu tien | Phu trach
@@ -117,7 +85,7 @@ Vi du: /them HOP TONG KET | 2026-07-01 | 2026-07-31 | A | ANH
 
 Sua ke hoach:
 /sua ten hoac ID | truong | gia tri moi
-Truong: ten · start · end · priority · nguoiphutrach · ghichu
+Truong: ten | start | end | priority | nguoiphutrach | ghichu
 Vi du: /sua HOP TONG KET | end | 2026-08-15
 
 Xem danh sach:  /ds
@@ -125,20 +93,20 @@ Danh dau xong:  /done ten hoac ID
 Cap nhat %:     /update ten hoac ID | 75
 Xoa ke hoach:   /xoa ten hoac ID
 
-Them ghi chu lich:
-/ghichu YYYY-MM-DD | Noi dung ghi chu
-Sua ghi chu:    /suaghi ID | Noi dung moi
-Xoa ghi chu:    /xoaghichu ID
-Xem ghi chu:    /xemghichu YYYY-MM-DD
+Them ghi chu lich: /ghichu YYYY-MM-DD | Noi dung
+Sua ghi chu:       /suaghi ID | Noi dung moi
+Xoa ghi chu:       /xoaghichu ID
+Xem ghi chu ngay:  /xemghichu YYYY-MM-DD
 
-Uu tien: A (cao) · B (vua) · C (thap) — Ngay: YYYY-MM-DD
+Uu tien: A (cao) | B (vua) | C (thap)
+Ngay: YYYY-MM-DD (vd: 2026-07-01)
 Huong dan: /help"""
 
 def cmd_them(text, tasks):
     body = text.split(' ', 1)[1] if ' ' in text else ''
     parts = [p.strip() for p in body.split('|')]
     if len(parts) < 3:
-        return None, 'Thieu thong tin.\n\nDinh dang:\n/them Ten | Tu ngay | Den ngay | Uu tien | Phu trach'
+        return None, 'Thieu thong tin.\nDinh dang: /them Ten | Tu ngay | Den ngay | Uu tien | Phu trach'
     for dt_str in [parts[1], parts[2]]:
         try:
             datetime.strptime(dt_str, '%Y-%m-%d')
@@ -250,7 +218,7 @@ def cmd_sua(text, tasks):
     body = text.split(' ', 1)[1] if ' ' in text else ''
     parts = [p.strip() for p in body.split('|')]
     if len(parts) < 3:
-        return None, 'Dinh dang:\n/sua ten hoac ID | truong | gia tri moi\nTruong: ten · start · end · priority · nguoiphutrach · ghichu'
+        return None, 'Dinh dang:\n/sua ten hoac ID | truong | gia tri moi\nTruong: ten | start | end | priority | nguoiphutrach | ghichu'
     t = find_task(tasks, parts[0])
     if not t:
         return None, f'Khong tim thay: {parts[0]}'
@@ -258,7 +226,7 @@ def cmd_sua(text, tasks):
                  'priority': 'priority', 'nguoiphutrach': 'assignee', 'ghichu': 'notes'}
     field = parts[1].lower()
     if field not in field_map:
-        return None, f'Truong khong hop le: {parts[1]}\nTruong hop le: ten · start · end · priority · nguoiphutrach · ghichu'
+        return None, f'Truong khong hop le: {parts[1]}\nTruong hop le: ten | start | end | priority | nguoiphutrach | ghichu'
     value = parts[2]
     key = field_map[field]
     if field in ('start', 'end'):
@@ -292,10 +260,10 @@ def cmd_suaghi(text, notes):
 def cmd_ds(tasks):
     if not tasks:
         return 'Chua co ke hoach nao.'
-    STATUS_ICON = {'Hoan thanh': '[Xong]', 'Dang thuc hien': '[Dang lam]', 'Chua bat dau': '[Chua]'}
+    STATUS = {'Hoan thanh': '[Xong]', 'Dang thuc hien': '[Dang lam]', 'Chua bat dau': '[Chua]'}
     lines = ['Danh sach ke hoach:\n']
     for t in tasks:
-        icon = STATUS_ICON.get(t.get('status', ''), '•')
+        icon = STATUS.get(t.get('status', ''), '•')
         lines.append(f'{icon} {t["title"]}')
         lines.append(f'   {t["start"]} -> {t["end"]}  [{t["priority"]}]  {t["progress"]}%')
     return '\n'.join(lines)
@@ -303,21 +271,15 @@ def cmd_ds(tasks):
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    access_token = refresh_access_token()
-    last_ts = load_offset()
+    offset  = load_offset()
+    result  = get_updates(offset)
+    updates = result.get('result', [])
 
-    result = get_messages(access_token, ALLOWED_USER, count=20)
-    if result.get('error', -1) != 0:
-        print('Zalo API error:', result)
+    if result.get('error_code') not in (None, 0):
+        print('Zalo Bot API error:', result)
         sys.exit(1)
 
-    all_msgs = result.get('data', [])
-    # src=0: tin nhắn từ người dùng gửi tới OA; lọc mới hơn last_ts
-    new_msgs = [m for m in all_msgs if m.get('src') == 0 and m.get('time', 0) > last_ts]
-    # Sắp xếp tăng dần theo thời gian để xử lý đúng thứ tự
-    new_msgs.sort(key=lambda m: m.get('time', 0))
-
-    if not new_msgs:
+    if not updates:
         print('Khong co tin nhan moi.')
         return
 
@@ -325,90 +287,95 @@ def main():
     notes         = load_notes()
     changed       = False
     notes_changed = False
+    new_off       = offset
 
-    for msg in new_msgs:
-        text = (msg.get('message') or {}).get('text', '').strip()
+    for upd in updates:
+        new_off  = upd.get('update_id', 0) + 1
+        msg      = upd.get('message', {})
+        chat_id  = str(msg.get('chat', {}).get('id', ''))
+        text     = (msg.get('text') or '').strip()
+
+        if chat_id != str(ALLOWED_CHAT):
+            print(f'Bo qua tin nhan tu chat {chat_id}')
+            continue
         if not text:
             continue
+
         cmd = text.split()[0].lower().split('@')[0]
 
         if cmd in ('/them', '/add'):
             new_tasks, reply = cmd_them(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks; changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/done', '/xong'):
             new_tasks, reply = cmd_done(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks; changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd == '/update':
             new_tasks, reply = cmd_update(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks; changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/xoa', '/del', '/delete'):
             new_tasks, reply = cmd_xoa(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks; changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/ds', '/list', '/danhsach'):
-            send(access_token, ALLOWED_USER, cmd_ds(tasks))
+            send(chat_id, cmd_ds(tasks))
 
         elif cmd in ('/sua', '/edit'):
             new_tasks, reply = cmd_sua(text, tasks)
             if new_tasks is not None:
                 tasks = new_tasks; changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/suaghi', '/editnote'):
             new_notes, reply = cmd_suaghi(text, notes)
             if new_notes is not None:
                 notes = new_notes; notes_changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/ghichu', '/addnote'):
             new_notes, reply = cmd_ghinhu(text, notes)
             if new_notes is not None:
                 notes = new_notes; notes_changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/xoaghichu', '/delnote'):
             new_notes, reply = cmd_xoanhu(text, notes)
             if new_notes is not None:
                 notes = new_notes; notes_changed = True
-            send(access_token, ALLOWED_USER, reply)
+            send(chat_id, reply)
 
         elif cmd in ('/xemghichu', '/viewnote'):
-            send(access_token, ALLOWED_USER, cmd_xemghu(text, notes))
+            send(chat_id, cmd_xemghu(text, notes))
 
         elif cmd in ('/help', '/start', '/huongdan'):
-            send(access_token, ALLOWED_USER, HELP_TEXT)
+            send(chat_id, HELP_TEXT)
 
         else:
-            send(access_token, ALLOWED_USER,
-                 f'Lenh khong hop le: {cmd}\nGui /help de xem huong dan.')
+            send(chat_id, f'Lenh khong hop le: {cmd}\nGui /help de xem huong dan.')
 
     if changed:
         save(tasks)
-        print(f'actionplan.json da cap nhat voi {len(tasks)} ke hoach.')
+        print(f'actionplan.json cap nhat: {len(tasks)} ke hoach.')
     else:
         print('Khong co thay doi ke hoach.')
 
     if notes_changed:
         save_notes(notes)
-        print(f'calendar_notes.json da cap nhat voi {len(notes)} ghi chu.')
+        print(f'calendar_notes.json cap nhat: {len(notes)} ghi chu.')
     else:
         print('Khong co thay doi ghi chu.')
 
-    # Lưu timestamp của tin nhắn mới nhất
-    max_ts = max(m.get('time', 0) for m in new_msgs)
-    save_offset(max_ts)
-    print(f'Offset cap nhat: {max_ts}')
+    save_offset(new_off)
 
 if __name__ == '__main__':
     main()

@@ -32,16 +32,15 @@ jobs:
 
       - name: Run Zalo sync
         env:
-          ZALO_APP_ID: ${{ secrets.ZALO_APP_ID }}
-          ZALO_APP_SECRET: ${{ secrets.ZALO_APP_SECRET }}
-          ZALO_USER_ID: ${{ secrets.ZALO_USER_ID }}
+          ZALO_BOT_TOKEN: ${{ secrets.ZALO_BOT_TOKEN }}
+          ZALO_CHAT_ID: ${{ secrets.ZALO_CHAT_ID }}
         run: python .github/scripts/zalo_sync.py
 
       - name: Commit & push changes
         run: |
           git config user.name  "Zalo Bot 🤖"
           git config user.email "bot@noreply.github.com"
-          git add actionplan.json calendar_notes.json .github/zalo_offset.txt .github/zalo_refresh_token.txt
+          git add actionplan.json calendar_notes.json .github/zalo_offset.txt
           if git diff --cached --quiet; then
             echo "Không có thay đổi, bỏ qua commit."
           else
