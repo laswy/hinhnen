@@ -13,19 +13,20 @@ DATA_FILE    = 'actionplan.json'
 NOTES_FILE   = 'calendar_notes.json'
 
 BASE_URL = f'https://bot-api.zapps.me/bot{BOT_TOKEN}'
+HEADERS  = {'User-Agent': 'python-zalo-bot/0.1.9', 'Connection': 'close'}
 
 # ── Zalo Bot helpers ──────────────────────────────────────────────────
 # API: POST https://bot-api.zapps.me/bot{token}/{endpoint}
-# getUpdates trả về 1 update tại một thời điểm (không phải list)
-# Cần loop tăng offset để lấy hết
+# Data gửi dạng application/x-www-form-urlencoded (không phải JSON)
+# getUpdates trả về 1 update tại một thời điểm — cần loop để lấy hết
 
 def get_update(offset=None):
     """Lấy 1 update từ server. Trả về dict hoặc {} nếu không có gì mới."""
-    data = {'timeout': 0}
+    data = {'timeout': '0'}
     if offset is not None:
-        data['offset'] = offset
+        data['offset'] = str(offset)
     try:
-        r = requests.post(f'{BASE_URL}/getUpdates', json=data, timeout=20)
+        r = requests.post(f'{BASE_URL}/getUpdates', data=data, headers=HEADERS, timeout=20)
         raw = r.json()
         # error_code 408 = long-polling timeout, không có tin nhắn mới — bình thường
         if not raw.get('ok'):
@@ -63,7 +64,8 @@ def fetch_all_updates(start_offset):
 def send(chat_id, text):
     requests.post(
         f'{BASE_URL}/sendMessage',
-        json={'chat_id': str(chat_id), 'text': text},
+        data={'chat_id': str(chat_id), 'text': text},
+        headers=HEADERS,
         timeout=15
     )
 
