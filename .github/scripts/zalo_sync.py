@@ -26,8 +26,11 @@ def get_update(offset=None):
         data['offset'] = offset
     try:
         r = requests.post(f'{BASE_URL}/getUpdates', json=data, timeout=20)
-        r.raise_for_status()
-        return r.json()
+        result = r.json()
+        # error_code 408 = long-polling timeout, không có tin nhắn mới — bình thường
+        if not result.get('ok') and result.get('error_code') == 408:
+            return {}
+        return result
     except requests.exceptions.Timeout:
         print('Canh bao: Zalo API timeout, bo qua lan nay.')
         return None
