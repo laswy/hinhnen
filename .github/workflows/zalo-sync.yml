@@ -1,0 +1,50 @@
+name: Zalo Sync — Cập nhật kế hoạch
+
+on:
+  schedule:
+    # 2 tiếng 1 lần, từ 7h-19h giờ VN (UTC+7 = 0h-12h UTC)
+    # 7h, 9h, 11h, 13h, 15h, 17h, 19h VN
+    - cron: '0 0,2,4,6,8,10,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Zalo sync
+        env:
+          ZALO_APP_ID: ${{ secrets.ZALO_APP_ID }}
+          ZALO_APP_SECRET: ${{ secrets.ZALO_APP_SECRET }}
+          ZALO_USER_ID: ${{ secrets.ZALO_USER_ID }}
+        run: python .github/scripts/zalo_sync.py
+
+      - name: Commit & push changes
+        run: |
+          git config user.name  "Zalo Bot 🤖"
+          git config user.email "bot@noreply.github.com"
+          git add actionplan.json calendar_notes.json .github/zalo_offset.txt .github/zalo_refresh_token.txt
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi, bỏ qua commit."
+          else
+            git commit -m "📋 Cập nhật kế hoạch từ Zalo"
+            git push origin main
+          fi
