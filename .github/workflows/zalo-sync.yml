@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name  "Zalo Bot 🤖"
           git config user.email "bot@noreply.github.com"
-          git add actionplan.json calendar_notes.json .github/zalo_offset.txt
+          git add --ignore-unmatch actionplan.json calendar_notes.json .github/zalo_offset.txt
           if git diff --cached --quiet; then
             echo "Không có thay đổi, bỏ qua commit."
           else
