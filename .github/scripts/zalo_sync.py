@@ -1,75 +1,18 @@
+import asyncio
 import json
 import os
-import sys
-import requests
 import random
 import string
+import sys
 from datetime import datetime
 
+import zalo_bot
+
 BOT_TOKEN    = os.environ['ZALO_BOT_TOKEN']
-ALLOWED_CHAT = os.environ['ZALO_CHAT_ID']   # group_id hoặc user_id được phép dùng lệnh
+ALLOWED_CHAT = os.environ['ZALO_CHAT_ID']
 OFFSET_FILE  = '.github/zalo_offset.txt'
 DATA_FILE    = 'actionplan.json'
 NOTES_FILE   = 'calendar_notes.json'
-
-BASE_URL = f'https://bot-api.zapps.me/bot{BOT_TOKEN}'
-HEADERS  = {'User-Agent': 'python-zalo-bot/0.1.9', 'Connection': 'close'}
-
-# ── Zalo Bot helpers ──────────────────────────────────────────────────
-# API: POST https://bot-api.zapps.me/bot{token}/{endpoint}
-# Data gửi dạng application/x-www-form-urlencoded (không phải JSON)
-# getUpdates trả về 1 update tại một thời điểm — cần loop để lấy hết
-
-def get_update(offset=None):
-    """Lấy 1 update từ server. Trả về dict hoặc {} nếu không có gì mới."""
-    data = {'timeout': '0'}
-    if offset is not None:
-        data['offset'] = str(offset)
-    try:
-        r = requests.post(f'{BASE_URL}/getUpdates', data=data, headers=HEADERS, timeout=35)
-        print(f'Zalo API status: {r.status_code}')
-        raw = r.json()
-        print(f'Zalo API response: {json.dumps(raw)[:300]}')
-        # error_code 408 = long-polling timeout, không có tin nhắn mới — bình thường
-        if not raw.get('ok'):
-            if raw.get('error_code') == 408:
-                return {}
-            print(f'Zalo API tra ve loi: {raw}')
-            return None
-        # API bọc dữ liệu trong field "result" — cần unwrap
-        return raw.get('result') or {}
-    except requests.exceptions.Timeout:
-        print('Canh bao: Zalo API timeout, bo qua lan nay.')
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f'Canh bao: Zalo API loi — {e}')
-        return None
-
-def fetch_all_updates(start_offset):
-    """Loop lấy tất cả updates mới, trả về list các raw dict."""
-    updates = []
-    offset = start_offset
-    while True:
-        result = get_update(offset)
-        if result is None:
-            # Lỗi kết nối — dừng, không cập nhật offset
-            return updates, start_offset
-        if not result or not result.get('message'):
-            break
-        updates.append(result)
-        update_id = result.get('update_id')
-        if update_id is None:
-            break
-        offset = update_id + 1
-    return updates, offset
-
-def send(chat_id, text):
-    requests.post(
-        f'{BASE_URL}/sendMessage',
-        data={'chat_id': str(chat_id), 'text': text},
-        headers=HEADERS,
-        timeout=15
-    )
 
 # ── Data helpers ──────────────────────────────────────────────────────
 
@@ -116,7 +59,7 @@ Bot Ke Hoach - Huong dan:
 
 Them ke hoach:
 /them Ten | Tu ngay | Den ngay | Uu tien | Phu trach
-Vi du: /them HOP TONG KET | 2026-07-01 | 2026-07-31 | A | ANH
+Vi du: /them HOP TONG KET | 2026-06-10 | 2026-06-30 | A | ANH
 
 Sua ke hoach:
 /sua ten hoac ID | truong | gia tri moi
@@ -134,42 +77,8 @@ Xoa ghi chu:       /xoaghichu ID
 Xem ghi chu ngay:  /xemghichu YYYY-MM-DD
 
 Uu tien: A (cao) | B (vua) | C (thap)
-Ngay: YYYY-MM-DD (vd: 2026-07-01)
+Ngay: YYYY-MM-DD (vd: 2026-06-10)
 Huong dan: /help"""
-
-def cmd_them(text, tasks):
-    body = text.split(' ', 1)[1] if ' ' in text else ''
-    parts = [p.strip() for p in body.split('|')]
-    if len(parts) < 3:
-        return None, 'Thieu thong tin.\nDinh dang: /them Ten | Tu ngay | Den ngay | Uu tien | Phu trach'
-    for dt_str in [parts[1], parts[2]]:
-        try:
-            datetime.strptime(dt_str, '%Y-%m-%d')
-        except ValueError:
-            return None, f'Ngay sai dinh dang: {dt_str}\nDung: YYYY-MM-DD (vd: 2026-07-01)'
-    prio = parts[3].upper() if len(parts) > 3 else 'B'
-    if prio not in ('A', 'B', 'C'):
-        prio = 'B'
-    task = {
-        'id':       gen_id(),
-        'title':    parts[0].upper(),
-        'category': 'Other',
-        'priority': prio,
-        'status':   'Chua bat dau',
-        'assignee': parts[4] if len(parts) > 4 else '',
-        'start':    parts[1],
-        'end':      parts[2],
-        'progress': 0,
-        'notes':    parts[5] if len(parts) > 5 else '',
-        'result':   ''
-    }
-    tasks.append(task)
-    reply = (f'Da them ke hoach!\n\n'
-             f'{task["title"]}\n'
-             f'{task["start"]} -> {task["end"]}\n'
-             f'Uu tien: {task["priority"]}  |  Phu trach: {task["assignee"] or "—"}\n'
-             f'ID: {task["id"]}')
-    return tasks, reply
 
 def find_task(tasks, keyword):
     kw = keyword.lower().strip()
@@ -181,13 +90,38 @@ def find_task(tasks, keyword):
             return t
     return None
 
+def cmd_them(text, tasks):
+    body = text.split(' ', 1)[1] if ' ' in text else ''
+    parts = [p.strip() for p in body.split('|')]
+    if len(parts) < 3:
+        return None, 'Thieu thong tin.\nDinh dang: /them Ten | Tu ngay | Den ngay | Uu tien | Phu trach'
+    for dt_str in [parts[1], parts[2]]:
+        try:
+            datetime.strptime(dt_str, '%Y-%m-%d')
+        except ValueError:
+            return None, f'Ngay sai dinh dang: {dt_str}\nDung: YYYY-MM-DD'
+    prio = parts[3].upper() if len(parts) > 3 else 'B'
+    if prio not in ('A', 'B', 'C'):
+        prio = 'B'
+    task = {
+        'id': gen_id(), 'title': parts[0].upper(), 'category': 'Other',
+        'priority': prio, 'status': 'Chua bat dau',
+        'assignee': parts[4] if len(parts) > 4 else '',
+        'start': parts[1], 'end': parts[2], 'progress': 0,
+        'notes': parts[5] if len(parts) > 5 else '', 'result': ''
+    }
+    tasks.append(task)
+    return tasks, (f'Da them ke hoach!\n\n{task["title"]}\n'
+                   f'{task["start"]} -> {task["end"]}\n'
+                   f'Uu tien: {task["priority"]}  |  Phu trach: {task["assignee"] or "—"}\n'
+                   f'ID: {task["id"]}')
+
 def cmd_done(text, tasks):
     keyword = text.split(' ', 1)[1].strip() if ' ' in text else ''
     t = find_task(tasks, keyword)
     if not t:
         return None, f'Khong tim thay: {keyword}'
-    t['status'] = 'Hoan thanh'
-    t['progress'] = 100
+    t['status'] = 'Hoan thanh'; t['progress'] = 100
     return tasks, f'Hoan thanh: {t["title"]}'
 
 def cmd_update(text, tasks):
@@ -200,10 +134,8 @@ def cmd_update(text, tasks):
         return None, f'Khong tim thay: {parts[0]}'
     pct = max(0, min(100, int(parts[1])))
     t['progress'] = pct
-    if pct == 100:
-        t['status'] = 'Hoan thanh'
-    elif pct > 0:
-        t['status'] = 'Dang thuc hien'
+    if pct == 100: t['status'] = 'Hoan thanh'
+    elif pct > 0: t['status'] = 'Dang thuc hien'
     return tasks, f'Cap nhat {t["title"]}: {pct}%'
 
 def cmd_xoa(text, tasks):
@@ -213,41 +145,6 @@ def cmd_xoa(text, tasks):
         return None, f'Khong tim thay: {keyword}'
     tasks.remove(t)
     return tasks, f'Da xoa: {t["title"]}'
-
-def cmd_ghinhu(text, notes):
-    body = text.split(' ', 1)[1] if ' ' in text else ''
-    parts = [p.strip() for p in body.split('|', 1)]
-    if len(parts) < 2:
-        return None, 'Dinh dang: /ghichu YYYY-MM-DD | Noi dung'
-    date_str = parts[0].strip()
-    try:
-        datetime.strptime(date_str, '%Y-%m-%d')
-    except ValueError:
-        return None, f'Ngay sai dinh dang: {date_str}\nDung: YYYY-MM-DD'
-    note = {'id': 'note' + gen_id(), 'date': date_str, 'text': parts[1].strip()}
-    notes.append(note)
-    return notes, (f'Da them ghi chu!\n\n'
-                   f'Ngay: {date_str}\n'
-                   f'Noi dung: {note["text"]}\n'
-                   f'ID: {note["id"]}')
-
-def cmd_xoanhu(text, notes):
-    keyword = text.split(' ', 1)[1].strip() if ' ' in text else ''
-    found = next((n for n in notes if n['id'] == keyword), None)
-    if not found:
-        return None, f'Khong tim thay ghi chu ID: {keyword}'
-    notes.remove(found)
-    return notes, f'Da xoa ghi chu: {found["text"][:50]}'
-
-def cmd_xemghu(text, notes):
-    date_str = text.split(' ', 1)[1].strip() if ' ' in text else ''
-    day_notes = [n for n in notes if n['date'] == date_str]
-    if not day_notes:
-        return f'Khong co ghi chu nao vao ngay {date_str}.'
-    lines = [f'Ghi chu ngay {date_str}:\n']
-    for n in day_notes:
-        lines.append(f'• {n["text"]}  [{n["id"]}]')
-    return '\n'.join(lines)
 
 def cmd_sua(text, tasks):
     body = text.split(' ', 1)[1] if ' ' in text else ''
@@ -261,40 +158,56 @@ def cmd_sua(text, tasks):
                  'priority': 'priority', 'nguoiphutrach': 'assignee', 'ghichu': 'notes'}
     field = parts[1].lower()
     if field not in field_map:
-        return None, f'Truong khong hop le: {parts[1]}\nTruong hop le: ten | start | end | priority | nguoiphutrach | ghichu'
+        return None, f'Truong khong hop le: {parts[1]}'
     value = parts[2]
-    key = field_map[field]
     if field in ('start', 'end'):
-        try:
-            datetime.strptime(value, '%Y-%m-%d')
-        except ValueError:
-            return None, f'Ngay sai dinh dang: {value}\nDung: YYYY-MM-DD'
+        try: datetime.strptime(value, '%Y-%m-%d')
+        except ValueError: return None, f'Ngay sai dinh dang: {value}'
     if field == 'priority':
         value = value.upper()
-        if value not in ('A', 'B', 'C'):
-            return None, 'Uu tien phai la A, B hoac C'
-    if field == 'ten':
-        value = value.upper()
-    t[key] = value
+        if value not in ('A', 'B', 'C'): return None, 'Uu tien phai la A, B hoac C'
+    if field == 'ten': value = value.upper()
+    t[field_map[field]] = value
     return tasks, f'Da cap nhat {t["title"]}\n{parts[1]}: {value}'
+
+def cmd_ghinhu(text, notes):
+    body = text.split(' ', 1)[1] if ' ' in text else ''
+    parts = [p.strip() for p in body.split('|', 1)]
+    if len(parts) < 2:
+        return None, 'Dinh dang: /ghichu YYYY-MM-DD | Noi dung'
+    try: datetime.strptime(parts[0], '%Y-%m-%d')
+    except ValueError: return None, f'Ngay sai dinh dang: {parts[0]}'
+    note = {'id': 'note' + gen_id(), 'date': parts[0], 'text': parts[1].strip()}
+    notes.append(note)
+    return notes, f'Da them ghi chu!\nNgay: {note["date"]}\nNoi dung: {note["text"]}\nID: {note["id"]}'
+
+def cmd_xoanhu(text, notes):
+    keyword = text.split(' ', 1)[1].strip() if ' ' in text else ''
+    found = next((n for n in notes if n['id'] == keyword), None)
+    if not found: return None, f'Khong tim thay ghi chu ID: {keyword}'
+    notes.remove(found)
+    return notes, f'Da xoa ghi chu: {found["text"][:50]}'
+
+def cmd_xemghu(text, notes):
+    date_str = text.split(' ', 1)[1].strip() if ' ' in text else ''
+    day_notes = [n for n in notes if n['date'] == date_str]
+    if not day_notes: return f'Khong co ghi chu nao vao ngay {date_str}.'
+    lines = [f'Ghi chu ngay {date_str}:\n']
+    for n in day_notes:
+        lines.append(f'• {n["text"]}  [{n["id"]}]')
+    return '\n'.join(lines)
 
 def cmd_suaghi(text, notes):
     body = text.split(' ', 1)[1] if ' ' in text else ''
     parts = [p.strip() for p in body.split('|', 1)]
-    if len(parts) < 2:
-        return None, 'Dinh dang: /suaghi ID | Noi dung moi'
+    if len(parts) < 2: return None, 'Dinh dang: /suaghi ID | Noi dung moi'
     found = next((n for n in notes if n['id'] == parts[0]), None)
-    if not found:
-        return None, f'Khong tim thay ghi chu ID: {parts[0]}'
+    if not found: return None, f'Khong tim thay ghi chu ID: {parts[0]}'
     found['text'] = parts[1]
-    return notes, (f'Da cap nhat ghi chu!\n'
-                   f'Ngay: {found["date"]}\n'
-                   f'Noi dung moi: {found["text"]}\n'
-                   f'ID: {found["id"]}')
+    return notes, f'Da cap nhat ghi chu!\nNgay: {found["date"]}\nNoi dung moi: {found["text"]}\nID: {found["id"]}'
 
 def cmd_ds(tasks):
-    if not tasks:
-        return 'Chua co ke hoach nao.'
+    if not tasks: return 'Chua co ke hoach nao.'
     STATUS = {'Hoan thanh': '[Xong]', 'Dang thuc hien': '[Dang lam]', 'Chua bat dau': '[Chua]'}
     lines = ['Danh sach ke hoach:\n']
     for t in tasks:
@@ -303,14 +216,36 @@ def cmd_ds(tasks):
         lines.append(f'   {t["start"]} -> {t["end"]}  [{t["priority"]}]  {t["progress"]}%')
     return '\n'.join(lines)
 
-# ── Main ──────────────────────────────────────────────────────────────
+# ── Async core ────────────────────────────────────────────────────────
 
-def main():
-    start_offset  = load_offset()
-    updates, new_off = fetch_all_updates(start_offset)
+async def run():
+    offset = load_offset()
+    raw_updates = []
 
-    if not updates:
-        print('Khong co tin nhan moi.')
+    try:
+        async with zalo_bot.Bot(BOT_TOKEN) as bot:
+            print('Ket noi Zalo Bot thanh cong.')
+            # Lấy hết updates mới
+            while True:
+                try:
+                    update = await bot.get_update(offset=offset, timeout=30, limit=10)
+                except Exception as e:
+                    print(f'Zalo API loi: {e}')
+                    break
+                if update is None or update.message is None:
+                    print('Khong co tin nhan moi.')
+                    break
+                raw_updates.append(update)
+                uid = update.api_kwargs.get('update_id')
+                if uid is not None:
+                    offset = int(uid) + 1
+                else:
+                    break
+    except Exception as e:
+        print(f'Khong the ket noi Zalo Bot: {e}')
+        return
+
+    if not raw_updates:
         return
 
     tasks         = load()
@@ -318,94 +253,78 @@ def main():
     changed       = False
     notes_changed = False
 
-    for raw in updates:
-        msg     = raw.get('message', {})
-        chat_id = str(msg.get('chat', {}).get('id', ''))
-        text    = (msg.get('text') or '').strip()
+    async with zalo_bot.Bot(BOT_TOKEN) as bot:
+        for update in raw_updates:
+            msg     = update.message
+            chat_id = msg.chat.id if msg and msg.chat else None
+            text    = (msg.text or '').strip() if msg else ''
 
-        if chat_id != str(ALLOWED_CHAT):
-            print(f'Bo qua tin nhan tu chat {chat_id}')
-            continue
-        if not text:
-            continue
+            print(f'Tin nhan tu chat {chat_id}: {text[:50]}')
 
-        cmd = text.split()[0].lower().split('@')[0]
-        print(f'Xu ly lenh: {cmd} tu chat {chat_id}')
+            if str(chat_id) != str(ALLOWED_CHAT):
+                print(f'Bo qua chat {chat_id}')
+                continue
+            if not text:
+                continue
 
-        if cmd in ('/them', '/add'):
-            new_tasks, reply = cmd_them(text, tasks)
-            if new_tasks is not None:
-                tasks = new_tasks; changed = True
-            send(chat_id, reply)
+            cmd = text.split()[0].lower().split('@')[0]
+            print(f'Xu ly lenh: {cmd}')
 
-        elif cmd in ('/done', '/xong'):
-            new_tasks, reply = cmd_done(text, tasks)
-            if new_tasks is not None:
-                tasks = new_tasks; changed = True
-            send(chat_id, reply)
+            async def reply(txt):
+                try:
+                    await bot.send_message(str(chat_id), txt)
+                except Exception as e:
+                    print(f'Loi gui tin: {e}')
 
-        elif cmd == '/update':
-            new_tasks, reply = cmd_update(text, tasks)
-            if new_tasks is not None:
-                tasks = new_tasks; changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/xoa', '/del', '/delete'):
-            new_tasks, reply = cmd_xoa(text, tasks)
-            if new_tasks is not None:
-                tasks = new_tasks; changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/ds', '/list', '/danhsach'):
-            send(chat_id, cmd_ds(tasks))
-
-        elif cmd in ('/sua', '/edit'):
-            new_tasks, reply = cmd_sua(text, tasks)
-            if new_tasks is not None:
-                tasks = new_tasks; changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/suaghi', '/editnote'):
-            new_notes, reply = cmd_suaghi(text, notes)
-            if new_notes is not None:
-                notes = new_notes; notes_changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/ghichu', '/addnote'):
-            new_notes, reply = cmd_ghinhu(text, notes)
-            if new_notes is not None:
-                notes = new_notes; notes_changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/xoaghichu', '/delnote'):
-            new_notes, reply = cmd_xoanhu(text, notes)
-            if new_notes is not None:
-                notes = new_notes; notes_changed = True
-            send(chat_id, reply)
-
-        elif cmd in ('/xemghichu', '/viewnote'):
-            send(chat_id, cmd_xemghu(text, notes))
-
-        elif cmd in ('/help', '/start', '/huongdan'):
-            send(chat_id, HELP_TEXT)
-
-        else:
-            send(chat_id, f'Lenh khong hop le: {cmd}\nGui /help de xem huong dan.')
+            if cmd in ('/them', '/add'):
+                new_tasks, r = cmd_them(text, tasks)
+                if new_tasks is not None: tasks = new_tasks; changed = True
+                await reply(r)
+            elif cmd in ('/done', '/xong'):
+                new_tasks, r = cmd_done(text, tasks)
+                if new_tasks is not None: tasks = new_tasks; changed = True
+                await reply(r)
+            elif cmd == '/update':
+                new_tasks, r = cmd_update(text, tasks)
+                if new_tasks is not None: tasks = new_tasks; changed = True
+                await reply(r)
+            elif cmd in ('/xoa', '/del', '/delete'):
+                new_tasks, r = cmd_xoa(text, tasks)
+                if new_tasks is not None: tasks = new_tasks; changed = True
+                await reply(r)
+            elif cmd in ('/ds', '/list', '/danhsach'):
+                await reply(cmd_ds(tasks))
+            elif cmd in ('/sua', '/edit'):
+                new_tasks, r = cmd_sua(text, tasks)
+                if new_tasks is not None: tasks = new_tasks; changed = True
+                await reply(r)
+            elif cmd in ('/ghichu', '/addnote'):
+                new_notes, r = cmd_ghinhu(text, notes)
+                if new_notes is not None: notes = new_notes; notes_changed = True
+                await reply(r)
+            elif cmd in ('/xoaghichu', '/delnote'):
+                new_notes, r = cmd_xoanhu(text, notes)
+                if new_notes is not None: notes = new_notes; notes_changed = True
+                await reply(r)
+            elif cmd in ('/xemghichu', '/viewnote'):
+                await reply(cmd_xemghu(text, notes))
+            elif cmd in ('/suaghi', '/editnote'):
+                new_notes, r = cmd_suaghi(text, notes)
+                if new_notes is not None: notes = new_notes; notes_changed = True
+                await reply(r)
+            elif cmd in ('/help', '/start', '/huongdan'):
+                await reply(HELP_TEXT)
+            else:
+                await reply(f'Lenh khong hop le: {cmd}\nGui /help de xem huong dan.')
 
     if changed:
         save(tasks)
         print(f'actionplan.json cap nhat: {len(tasks)} ke hoach.')
-    else:
-        print('Khong co thay doi ke hoach.')
-
     if notes_changed:
         save_notes(notes)
         print(f'calendar_notes.json cap nhat: {len(notes)} ghi chu.')
-    else:
-        print('Khong co thay doi ghi chu.')
-
-    save_offset(new_off)
-    print(f'Offset moi: {new_off}')
+    save_offset(offset)
+    print(f'Offset moi: {offset}')
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(run())
