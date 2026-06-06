@@ -24,8 +24,16 @@ def get_update(offset=None):
     data = {'timeout': 0}
     if offset is not None:
         data['offset'] = offset
-    r = requests.post(f'{BASE_URL}/getUpdates', json=data, timeout=20)
-    return r.json()
+    try:
+        r = requests.post(f'{BASE_URL}/getUpdates', json=data, timeout=20)
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.Timeout:
+        print('Canh bao: Zalo API timeout, bo qua lan nay.')
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f'Canh bao: Zalo API loi — {e}')
+        return None
 
 def fetch_all_updates(start_offset):
     """Loop lấy tất cả updates mới, trả về list các raw dict."""
@@ -33,6 +41,9 @@ def fetch_all_updates(start_offset):
     offset = start_offset
     while True:
         result = get_update(offset)
+        if result is None:
+            # Lỗi kết nối — dừng, không cập nhật offset
+            return updates, start_offset
         if not result or not result.get('message'):
             break
         updates.append(result)
