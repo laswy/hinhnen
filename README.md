@@ -33,7 +33,7 @@ calendar_notes.json             # Ghi chú cá nhân theo ngày
     telegram_sync.py            # Bot Telegram xử lý lệnh
   workflows/
     deploy.yml                  # Tự động deploy lên GitHub Pages
-    telegram-sync.yml           # Cron đồng bộ Telegram (mỗi 2 tiếng, 7h–19h VN)
+    telegram-sync.yml           # Cron đồng bộ Telegram (mỗi 1 tiếng, 7h–19h VN)
 ```
 
 ---

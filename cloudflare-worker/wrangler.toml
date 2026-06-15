@@ -1,9 +1,0 @@
-name = "zalo-bot"
-main = "worker.js"
-compatibility_date = "2024-11-01"
-
-# Các biến KHÔNG bí mật có thể để ở đây.
-# Biến bí mật (token) đặt bằng lệnh: npx wrangler secret put <TEN>
-[vars]
-GITHUB_REPO = "laswy/hinhnen"
-GITHUB_BRANCH = "main"
