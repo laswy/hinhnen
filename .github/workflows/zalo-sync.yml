@@ -1,10 +1,9 @@
-name: Zalo Sync — Cập nhật kế hoạch
+name: Zalo Sync — Cập nhật kế hoạch (polling — DỰ PHÒNG)
 
+# LƯU Ý: Cách polling này hay timeout vì GitHub Actions (Mỹ) kết nối kém tới
+# server Zalo (VN). Đã chuyển sang webhook qua Cloudflare Worker (xem thư mục
+# cloudflare-worker/). Workflow này chỉ giữ lại để chạy tay khi cần — đã TẮT cron.
 on:
-  schedule:
-    # 2 tiếng 1 lần, từ 7h-19h giờ VN (UTC+7 = 0h-12h UTC)
-    # 7h, 9h, 11h, 13h, 15h, 17h, 19h VN
-    - cron: '0 0,2,4,6,8,10,12 * * *'
   workflow_dispatch:
 
 permissions:
