@@ -17,12 +17,18 @@
 const ZALO_API = 'https://bot-api.zapps.me';
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const path = url.pathname.replace(/^\/+/, '');
+
+    // Mở trên trình duyệt: https://<worker>/setup/<WEBHOOK_SECRET>
+    // → tự đăng ký webhook trỏ về chính Worker này. Không cần terminal.
+    if (request.method === 'GET' && path === `setup/${env.WEBHOOK_SECRET}`) {
+      return setupWebhook(env, url.origin);
+    }
 
     // Xác thực: secret nằm trong path  →  https://<worker>/<WEBHOOK_SECRET>
-    const pathSecret = url.pathname.replace(/^\/+/, '');
-    if (request.method !== 'POST' || pathSecret !== env.WEBHOOK_SECRET) {
+    if (request.method !== 'POST' || path !== env.WEBHOOK_SECRET) {
       return new Response('Not found', { status: 404 });
     }
 
@@ -296,6 +302,53 @@ function cmdXemNote(text, notes) {
   const lines = [`Ghi chu ngay ${dateStr}:\n`];
   for (const n of dayNotes) lines.push(`• ${n.text}  [${n.id}]`);
   return lines.join('\n');
+}
+
+// ── Đăng ký webhook (mở bằng trình duyệt) ─────────────────────────────
+
+async function setupWebhook(env, origin) {
+  const webhookUrl = `${origin}/${env.WEBHOOK_SECRET}`;
+  const api = `${ZALO_API}/bot${env.ZALO_BOT_TOKEN}`;
+
+  const form = new URLSearchParams();
+  form.set('url', webhookUrl);
+  form.set('secret_token', env.WEBHOOK_SECRET);
+
+  const r = await fetch(`${api}/setWebhook`, {
+    method: 'POST',
+    headers: {
+      'User-Agent': 'cloudflare-worker-zalo-bot',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: form.toString(),
+  });
+  const result = await r.text();
+
+  const info = await fetch(`${api}/getWebhookInfo`, {
+    method: 'POST',
+    headers: {
+      'User-Agent': 'cloudflare-worker-zalo-bot',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'x=1',
+  });
+  const infoText = await info.text();
+
+  const html = `<!doctype html><meta charset="utf-8">
+<title>Zalo Bot Setup</title>
+<body style="font-family:sans-serif;max-width:640px;margin:40px auto;padding:0 16px;line-height:1.6">
+<h2>Dang ky webhook</h2>
+<p><b>Webhook URL:</b><br><code>${webhookUrl}</code></p>
+<p><b>Ket qua setWebhook:</b><br><code>${escapeHtml(result)}</code></p>
+<p><b>Webhook hien tai:</b><br><code>${escapeHtml(infoText)}</code></p>
+<hr>
+<p>Neu thay <code>"ok":true</code> la da xong. Vao Zalo go <b>/help</b> de thu.</p>
+</body>`;
+  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
 // ── Zalo API ──────────────────────────────────────────────────────────
