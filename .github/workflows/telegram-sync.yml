@@ -2,9 +2,8 @@ name: Telegram Sync — Cập nhật kế hoạch
 
 on:
   schedule:
-    # 2 tiếng 1 lần, từ 7h-19h giờ VN (UTC+7 = 0h-12h UTC)
-    # 7h, 9h, 11h, 13h, 15h, 17h, 19h VN
-    - cron: '0 0,2,4,6,8,10,12 * * *'
+    # 1 tiếng 1 lần, từ 7h-19h giờ VN (UTC+7 = 0h-12h UTC)
+    - cron: '0 0-12 * * *'
   workflow_dispatch:
 
 permissions:
