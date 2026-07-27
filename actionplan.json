@@ -45,8 +45,21 @@
     "priority": "B",
     "status": "Đang thực hiện",
     "assignee": "ANH",
-    "start": "2026-08-06",
-    "end": "2026-08-08",
+    "start": "2026-08-03",
+    "end": "2026-08-04",
+    "progress": 0,
+    "notes": "",
+    "result": ""
+  },
+    {
+    "id": "mpf04hvre8a20",
+    "title": "ĐÀO TẠO ISO 14001:2026",
+    "category": "Other",
+    "priority": "B",
+    "status": "Đang thực hiện",
+    "assignee": "ANH",
+    "start": "2026-08-07",
+    "end": "2026-08-07",
     "progress": 0,
     "notes": "",
     "result": ""
