@@ -514,6 +514,10 @@
   .gl { display:flex; align-items:center; gap:4px; }
   .gl-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
   .gl-txt { font-size:7px; color:var(--gantt-label); letter-spacing:.5px; text-transform:uppercase; }
+  .gl-toggle { cursor:pointer; user-select:none; padding:2px 4px; margin:-2px -4px; border-radius:3px; transition:background .2s,opacity .2s; opacity:.55; }
+  .gl-toggle:hover { background:var(--gantt-line); }
+  .gl-toggle.gl-active { opacity:1; }
+  .gl-toggle .gl-eye { font-size:7px; margin-left:1px; }
   .gantt-rule { height:1px; background:var(--gantt-line); margin-bottom:6px; flex-shrink:0; }
 
   /* Month ruler */
@@ -1038,7 +1042,7 @@
         <div class="gantt-head">
           <div class="gantt-title">📋 Kế Hoạch</div>
           <div class="gantt-legend">
-            <div class="gl"><div class="gl-dot" style="background:#0E9E87"></div><div class="gl-txt">Hoàn thành</div></div>
+            <div class="gl gl-toggle" id="gl-toggle-done" title="Kích để hiện/ẩn kế hoạch đã hoàn thành"><div class="gl-dot" style="background:#0E9E87"></div><div class="gl-txt">Hoàn thành</div><span class="gl-eye" id="gl-toggle-done-icon">👁</span></div>
             <div class="gl"><div class="gl-dot" style="background:#2A5ACC"></div><div class="gl-txt">Đang thực hiện</div></div>
             <div class="gl"><div class="gl-dot" style="background:#8A6800"></div><div class="gl-txt">Chưa bắt đầu</div></div>
             <div id="gantt-src" style="font-size:7px;color:var(--gantt-label);letter-spacing:.5px">actionplan.json</div>
@@ -1721,6 +1725,26 @@ function positionTooltip(e) {
   tt.style.top  = y + 'px';
 }
 
+let ganttTasksAll = [];
+let showCompletedPlans = false;
+
+function renderGanttTasks() {
+  const sorted = [...ganttTasksAll].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const visible = showCompletedPlans ? sorted : sorted.filter(t => t.status !== 'Hoàn thành');
+  buildGanttRows(visible);
+
+  const toggle = document.getElementById('gl-toggle-done');
+  const icon = document.getElementById('gl-toggle-done-icon');
+  const hiddenCount = sorted.length - visible.length;
+  if (toggle) toggle.classList.toggle('gl-active', showCompletedPlans);
+  if (icon) icon.textContent = showCompletedPlans ? '👁' : (hiddenCount > 0 ? `👁‍🗨 ${hiddenCount}` : '👁‍🗨');
+}
+
+document.getElementById('gl-toggle-done').addEventListener('click', () => {
+  showCompletedPlans = !showCompletedPlans;
+  renderGanttTasks();
+});
+
 async function loadGantt() {
   let tasks = null;
   try {
@@ -1744,8 +1768,9 @@ async function loadGantt() {
   }
 
   PLAN_TASKS = tasks;  // sync to global for calendar indicators
+  ganttTasksAll = tasks;
   buildRuler();
-  buildGanttRows(tasks);
+  renderGanttTasks();
 }
 
 /* ════════════════════════════
