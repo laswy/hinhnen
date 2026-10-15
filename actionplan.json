@@ -69,13 +69,13 @@
     "title": "ĐÁNH GIÁ IATF 16949:2016",
     "category": "Other",
     "priority": "A",
-    "status": "Đang thực hiện",
+    "status": "Hoàn thành",
     "assignee": "ALL",
     "start": "2026-10-05",
     "end": "2026-10-09",
-    "progress": 0,
+    "progress": 100,
     "notes": "",
-    "result": ""
+    "result": "4 NC minor"
   },
   {
     "id": "v2d2kk7g",
